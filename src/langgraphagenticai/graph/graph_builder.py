@@ -4,18 +4,21 @@ from langgraph.graph import START,END
 from src.langgraphagenticai.state.State import State
 from src.langgraphagenticai.Nodes.basic_chatbot_node import BasicChatbotNode
 from src.langgraphagenticai.tools.basic_tool import get_tools,create_tool_node
+from src.langgraphagenticai.Nodes.chatbot_with_toolnode import ChatbotWithTool
+from langgraph.checkpoint.memory import MemorySaver
+
 class GraphBuilder:
     def __init__(self,model):
         self.llm=model
-        self.graph_builder=StateGraph(State)
+        self.memory = MemorySaver()
+
+        # self.graph_builder=StateGraph(State)
 
     def basic_chatbot_build_graph(self):
         """
         Builds a basic chatbot graph using LangGraph.
-        This method initializes a chatbot node using the `BasicChatbotNode` class 
-        and integrates it into the graph. The chatbot node is set as both the 
-        entry and exit point of the graph.
         """
+
         self.basic_chatbot_node = BasicChatbotNode(self.llm)
         self.graph_builder.add_node("chatbot",self.basic_chatbot_node.process)
         self.graph_builder.add_edge(START,"chatbot")
@@ -36,14 +39,11 @@ class GraphBuilder:
 
         llm=self.llm
 
+        obj_with_toolnode=ChatbotWithTool(llm)
+        chatbot_node=obj_with_toolnode.create_chatbot(tools)
 
 
-
-
-
-
-
-        self.graph_builder.add_node("chatbot","")
+        self.graph_builder.add_node("chatbot",chatbot_node)
         self.graph_builder.add_node("tools",tool_node)
         self.graph_builder.add_edge(START,"chatbot")
         self.graph_builder.add_conditional_edges(
@@ -57,12 +57,20 @@ class GraphBuilder:
 
     def setup_graph(self,usecase : str):
         """
-            Sets up graph for selected usecase
+            Sets up graph for selected usecase.
+            Only Basic Chatbot uses memory; other usecases compile normally.
         """
+
+        self.graph_builder = StateGraph(State)
+
         if usecase == "Basic Chatbot":
             self.basic_chatbot_build_graph()
-        if usecase == "Chatbot with web":
+            return self.graph_builder.compile(checkpointer=self.memory)
+        elif usecase == "Chatbot with web":
             self.chatbot_with_tool_build_graph()
+            return self.graph_builder.compile()
+        # default fallback
         return self.graph_builder.compile()
+
 
         

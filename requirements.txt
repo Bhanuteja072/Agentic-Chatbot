@@ -6,3 +6,4 @@ langchain_groq
 faiss-cpu
 langchain_tavily
 streamlit
+wikipedia
