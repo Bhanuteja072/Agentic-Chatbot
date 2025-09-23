@@ -53,6 +53,23 @@ class GraphBuilder:
         self.graph_builder.add_edge("tools","chatbot")
         self.graph_builder.add_edge("chatbot",END)
 
+    
+    def ai_news_graph(self):
+
+        self.graph_builder.add_node("Fetch_news","")
+        self.graph_builder.add_node("Summarize","")
+        self.graph_builder.add_node("save_result","")
+
+
+        self.graph_builder.add_edge(START,"Fetch_news")
+        self.graph_builder.add_edge("Fetch_news","Summarize")
+        self.graph_builder.add_edge("Summarize","save_result")
+        self.graph_builder.add_edge("save_result",END)
+
+
+
+
+
 
 
     def setup_graph(self,usecase : str):
