@@ -34,6 +34,12 @@ class LoadStreamlitUI:
                 if not self.user_controls["TAVILY_API_KEY"]:
                     st.warning("⚠️ Please enter your Tavily Api  key to proceed. Don't have? refer : https://app.tavily.com/home")
 
+            if self.user_controls["selected_usecase"] == "AI News Summarizer":
+                os.environ["TAVILY_API_KEY"]= self.user_controls["TAVILY_API_KEY"]=st.session_state["TAVILY_API_KEY"]=st.text_input("Tavily Key",type="password")
+                if not self.user_controls["TAVILY_API_KEY"]:
+                    st.warning("⚠️ Please enter your Tavily Api  key to proceed. Don't have? refer : https://app.tavily.com/home")
+
+
 
 
         return self.user_controls
