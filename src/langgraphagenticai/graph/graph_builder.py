@@ -6,6 +6,7 @@ from src.langgraphagenticai.Nodes.basic_chatbot_node import BasicChatbotNode
 from src.langgraphagenticai.tools.basic_tool import get_tools,create_tool_node
 from src.langgraphagenticai.Nodes.chatbot_with_toolnode import ChatbotWithTool
 from langgraph.checkpoint.memory import MemorySaver
+from src.langgraphagenticai.Nodes.ai_news_node import AINewsNode
 
 class GraphBuilder:
     def __init__(self,model):
@@ -56,9 +57,11 @@ class GraphBuilder:
     
     def ai_news_graph(self):
 
-        self.graph_builder.add_node("Fetch_news","")
-        self.graph_builder.add_node("Summarize","")
-        self.graph_builder.add_node("save_result","")
+        ai_news_node=AINewsNode(self.llm)
+
+        self.graph_builder.add_node("Fetch_news",ai_news_node.fetch_news)
+        self.graph_builder.add_node("Summarize",ai_news_node.summarize_news)
+        self.graph_builder.add_node("save_result",ai_news_node.save_result)
 
 
         self.graph_builder.add_edge(START,"Fetch_news")
