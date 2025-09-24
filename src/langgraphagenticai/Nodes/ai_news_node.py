@@ -28,7 +28,7 @@ class AINewsNode:
         time_range_map = {'daily': 'd', 'weekly': 'w', 'monthly': 'm', 'year': 'y'}
         days_map = {'daily': 1, 'weekly': 7, 'monthly': 30, 'year': 366}
 
-        response = self.tavily.search(
+        response = self.tavily.invoke(
             query="Top Artificial Intelligence (AI) technology news India and globally",
             topic="news",
             time_range=time_range_map[frequency],
