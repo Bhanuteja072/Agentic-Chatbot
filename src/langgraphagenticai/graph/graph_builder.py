@@ -89,6 +89,9 @@ class GraphBuilder:
         elif usecase == "Chatbot with web":
             self.chatbot_with_tool_build_graph()
             return self.graph_builder.compile()
+        elif usecase == "AI News Summarizer":
+            self.ai_news_graph()
+            return self.graph_builder.compile()
         # default fallback
         return self.graph_builder.compile()
 
