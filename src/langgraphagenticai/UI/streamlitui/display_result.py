@@ -2,6 +2,13 @@ import streamlit as st
 from langchain_core.messages import HumanMessage,AIMessage,ToolMessage
 import json
 import uuid
+import unicodedata
+def normalize_text(text: str) -> str:
+    """Convert text to safe ASCII/UTF-8 by removing unsupported characters."""
+    if not isinstance(text, str):
+        return str(text)
+    # Keep UTF-8 if possible, fall back to ASCII for weird symbols
+    return unicodedata.normalize("NFKD", text).encode("utf-8", "ignore").decode("utf-8")
 
 
 
@@ -29,6 +36,7 @@ class DisplayResultStreamlit:
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
             st.session_state.chat_history.append(("user", user_message))
+
             # state_input = {"messages": [("user", user_message)]}
             # Wrap user message as HumanMessage so MemorySaver works
             state_input = {"messages": [HumanMessage(content=user_message)]}
@@ -75,8 +83,10 @@ class DisplayResultStreamlit:
                 try:
                     # Read the markdown file
                     AI_NEWS_PATH = f"./AINews/{frequency.lower()}_summary.md"
-                    with open(AI_NEWS_PATH, "r") as file:
+                    with open(AI_NEWS_PATH, "r",encoding="utf-8", errors="replace") as file:
                         markdown_content = file.read()
+
+                    # safe_markdown = normalize_text(markdown_content)
 
                     # Display the markdown content in Streamlit
                     st.markdown(markdown_content, unsafe_allow_html=True)

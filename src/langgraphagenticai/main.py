@@ -1,8 +1,18 @@
+import sys, io
+import os
 import streamlit as st
 from src.langgraphagenticai.ui.streamlitui.loadui import LoadStreamlitUI
 from src.langgraphagenticai.llms.groqllm import GroqLlm
 from src.langgraphagenticai.graph.graph_builder import GraphBuilder
 from src.langgraphagenticai.ui.streamlitui.display_result import DisplayResultStreamlit
+# Force UTF-8 for stdout and stderr
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
+
+# Also force default encoding for file writes
+os.environ["PYTHONIOENCODING"] = "utf-8"
+
 
 
 def load_langgraph_agenticai_app():

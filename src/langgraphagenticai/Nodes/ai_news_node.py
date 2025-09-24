@@ -1,4 +1,4 @@
-from langchain_tavily  import TavilySearch
+from tavily  import TavilyClient
 from langchain_core.prompts import ChatPromptTemplate
 
 
@@ -7,7 +7,7 @@ class AINewsNode:
         """
         Initialize the AINewsNode with API keys for Tavily and GROQ.
         """
-        self.tavily = TavilySearch()
+        self.tavily = TavilyClient()
         self.llm = llm
         # this is used to capture various steps in this file so that later can be use for steps shown
         self.state = {}
@@ -28,7 +28,7 @@ class AINewsNode:
         time_range_map = {'daily': 'd', 'weekly': 'w', 'monthly': 'm', 'year': 'y'}
         days_map = {'daily': 1, 'weekly': 7, 'monthly': 30, 'year': 366}
 
-        response = self.tavily.invoke(
+        response = self.tavily.search(
             query="Top Artificial Intelligence (AI) technology news India and globally",
             topic="news",
             time_range=time_range_map[frequency],
@@ -82,12 +82,11 @@ class AINewsNode:
         freq=self.state["frequency"]
         summary=self.state["summary"]
         file_name=f"./AINews/{freq}_summary.md"
-        with open (file_name,'w')as f:
+        with open (file_name,'w',encoding="utf-8", errors="replace")as f:
             f.write(f"#{freq.capitalize()} AI News Summary\n\n")
             f.write(summary)
         self.state['filename']=file_name
         return self.state
-
 
 
 
