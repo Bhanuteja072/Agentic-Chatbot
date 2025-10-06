@@ -236,10 +236,5 @@ Development tips
 
 --------------------------------------------------------------------------------
 
-License
-- Add your preferred license here (e.g., MIT) if applicable.
-
---------------------------------------------------------------------------------
-
 Acknowledgements
 - LangGraph, LangChain, FAISS, HuggingFace, Groq, Tavily, Wikipedia community tools.
