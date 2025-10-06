@@ -7,3 +7,6 @@ faiss-cpu
 langchain_tavily
 streamlit
 wikipedia
+langchain-huggingface
+faiss-cpu
+pypdf

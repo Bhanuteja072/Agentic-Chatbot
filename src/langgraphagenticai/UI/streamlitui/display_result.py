@@ -3,6 +3,8 @@ from langchain_core.messages import HumanMessage,AIMessage,ToolMessage
 import json
 import uuid
 import unicodedata
+from langchain.schema import Document  # add this import
+
 def normalize_text(text: str) -> str:
     """Convert text to safe ASCII/UTF-8 by removing unsupported characters."""
     if not isinstance(text, str):
@@ -94,3 +96,38 @@ class DisplayResultStreamlit:
                     st.error(f"News Not Generated or File not found: {AI_NEWS_PATH}")
                 except Exception as e:
                     st.error(f"An error occurred: {str(e)}")
+        elif usecase == "ChatWithPdf":
+            with st.spinner("Analyzing PDF and generating answer... ⏳"):
+                try:
+                    result = graph.invoke({"question": user_message})
+                    answer = result.get("generation")
+                    docs = result.get("documents", [])
+
+
+                    # Normalize to a list of Document to avoid "'Document' object is not subscriptable"
+                    if docs is None:
+                        docs = []
+                    elif isinstance(docs, Document):
+                        docs = [docs]
+                    elif isinstance(docs, dict) and "page_content" in docs:
+                        docs = [Document(page_content=docs["page_content"])]
+                    elif not isinstance(docs, list):
+                        # Fallback: wrap unknown type as string
+                        docs = [Document(page_content=str(docs))]
+
+                    with st.chat_message("user"):
+                        st.write(user_message)
+
+                    if answer:
+                        with st.chat_message("assistant"):
+                            st.subheader("📖 Answer")
+                            st.write(answer)
+
+                    if docs:
+                        with st.expander("🔎 Supporting PDF Chunks"):
+                            for i, d in enumerate(docs[:5]):  # show first 5 chunks
+                                st.markdown(f"**Chunk {i+1}:**")
+                                st.write(d.page_content)
+
+                except Exception as e:
+                    st.error(f"Error processing PDF: {str(e)}")
