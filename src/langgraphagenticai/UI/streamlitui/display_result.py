@@ -3,7 +3,9 @@ from langchain_core.messages import HumanMessage,AIMessage,ToolMessage
 import json
 import uuid
 import unicodedata
-from langchain.schema import Document  # add this import
+from langchain.schema import Document
+
+from src.langgraphagenticai import graph  # add this import
 
 def normalize_text(text: str) -> str:
     """Convert text to safe ASCII/UTF-8 by removing unsupported characters."""
@@ -79,23 +81,50 @@ class DisplayResultStreamlit:
                     with st.chat_message("assistant"):
                         st.write(message.content)
         elif usecase == "AI News Summarizer":
-            frequency = self.user_message
-            with st.spinner("Fetching and summarizing news... ⏳"):
-                result = graph.invoke({"messages": frequency})
+            import json as _json
+
+            # Handle both legacy string and new JSON message forms
+            frequency = None
+            news_query = None
+
+            user_msg = self.user_message
+            if isinstance(user_msg, str):
                 try:
-                    # Read the markdown file
-                    AI_NEWS_PATH = f"./AINews/{frequency.lower()}_summary.md"
-                    with open(AI_NEWS_PATH, "r",encoding="utf-8", errors="replace") as file:
+                    parsed = _json.loads(user_msg)
+                    frequency = parsed.get("frequency", "Daily")
+                    news_query = parsed.get("news_query", "")
+                except Exception:
+                    frequency = user_msg
+                    news_query = ""
+            elif isinstance(user_msg, dict):
+                frequency = user_msg.get("frequency", "Daily")
+                news_query = user_msg.get("news_query", "")
+            else:
+                frequency = str(user_msg)
+                news_query = ""
+
+            # Normalize frequency for safe file naming
+            freq_str = (frequency or "Daily").lower()
+            if freq_str not in ["daily", "weekly", "monthly", "year"]:
+                freq_str = "daily"
+
+            # Build the message payload for graph.invoke()
+            content_str = _json.dumps({"frequency": freq_str, "news_query": news_query})
+            message_content = {"role": "user", "content": content_str}
+
+            with st.spinner("Fetching and summarizing news... ⏳"):
+                # Graph expects list of message dicts
+                result = graph.invoke({"messages": [message_content]})
+                try:
+                    AI_NEWS_PATH = f"./AINews/{freq_str}_summary.md"
+                    with open(AI_NEWS_PATH, "r", encoding="utf-8", errors="replace") as file:
                         markdown_content = file.read()
-
-                    # safe_markdown = normalize_text(markdown_content)
-
-                    # Display the markdown content in Streamlit
                     st.markdown(markdown_content, unsafe_allow_html=True)
                 except FileNotFoundError:
                     st.error(f"News Not Generated or File not found: {AI_NEWS_PATH}")
                 except Exception as e:
                     st.error(f"An error occurred: {str(e)}")
+
         elif usecase == "ChatWithPdf":
             with st.spinner("Analyzing PDF and generating answer... ⏳"):
                 try:
