@@ -64,6 +64,8 @@ class GraphBuilder:
 
     
     def ai_news_graph(self):
+        """Builds graph for AI News Summarizer (Fetch → Summarize → Save)."""
+
 
         ai_news_node=AINewsNode(self.llm)
 
