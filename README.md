@@ -21,7 +21,7 @@ Project structure
   - Nodes/
     - basic_chatbot_node.py — simple LLM chat node
     - chatbot_with_toolnode.py — chat with tools node
-    - ai_news_node.py — fetch + summarize AI news with Tavily + LLM
+    - ai_news_node.py — AI news fetch + LLM summarization (Tavily client, JSON-friendly)
     - chatwithpdf_node.py — Chat-With-PDF graph node functions (RAG router/grader, etc.)
   - state/State.py — TypedDicts for State/GraphState and data models for structured outputs
   - tools/
@@ -44,15 +44,19 @@ Use cases
   - WikipediaQueryRun
 - LangGraph ToolNode handles tool invocation via the LLM.
 
-3) AI News Summarizer
-- Fetches recent AI news via Tavily (tavily client) and summarizes with the LLM.
-- Writes a markdown summary to ./AINews/{daily|weekly|monthly}_summary.md.
+3) AI News Summarizer (enhanced)
+- Fetches recent AI news using the official Tavily Python client and summarizes with the LLM.
+- Accepts both free text and structured JSON input:
+  - Example JSON: {"frequency":"weekly","news_query":"LLM regulation"}
+  - Valid frequencies: daily, weekly, monthly, year
+- Produces a clean markdown summary and saves it to:
+  - ./AINews/{daily|weekly|monthly|year|custom}_summary.md
 
 4) ChatWithPdf (RAG + routing)
 - Upload a PDF, it’s parsed and chunked, embedded with HuggingFace (all-MiniLM-L6-v2).
 - FAISS vectorstore created in-memory; questions are routed:
   - vectorstore: retrieve top chunks, grade relevance, generate, grade hallucinations/answer
-  - web_search: fetch via Tavily search when needed
+  - web_search: fetch via Tavily search when needed (if TAVILY_API_KEY provided)
 - The UI shows the answer and up to 5 supporting chunks.
 
 --------------------------------------------------------------------------------
@@ -61,8 +65,8 @@ Prerequisites
 - OS: Windows (tested)
 - Python: 3.10+ recommended
 - Accounts/API keys:
-  - Groq API key (required for LLM)
-  - Tavily API key (required for web search, chatbot-with-web and AI News Summarizer; optional for Chat-With-PDF unless routing selects web_search)
+  - GROQ_API_KEY (required for LLM)
+  - TAVILY_API_KEY (required for web search, “Chatbot with web”, and AI News Summarizer; optional for Chat-With-PDF unless routing selects web_search)
 
 --------------------------------------------------------------------------------
 
@@ -84,27 +88,25 @@ python -m venv .venv
 ```powershell
 pip install --upgrade pip
 pip install -r requirements.txt
-# Optional: if you use AI News Summarizer (tavily client) and it's not installed
+# AI News Summarizer uses the Tavily Python client:
 pip install tavily
 ```
 
-Note: requirements.txt already includes:
+Note: requirements.txt includes:
 - langchain, langgraph, langchain_community, langchain_core, langchain_groq
-- langchain_tavily (for tools)
-- langchain-huggingface
-- faiss-cpu
-- pypdf
+- langchain_tavily (for tools integration)
+- langchain-huggingface, faiss-cpu, pypdf
 - streamlit, wikipedia
 
 4) Provide API keys
 
-Option A — via environment variables (session only)
+Option A — environment variables (current shell session)
 ```powershell
 $env:GROQ_API_KEY = 'your_groq_api_key'
-$env:TAVILY_API_KEY = 'your_tavily_api_key'  # needed for web search features
+$env:TAVILY_API_KEY = 'your_tavily_api_key'
 ```
 
-Option B — permanently (user scope)
+Option B — permanent (user scope)
 ```powershell
 setx GROQ_API_KEY "your_groq_api_key"
 setx TAVILY_API_KEY "your_tavily_api_key"
@@ -113,7 +115,7 @@ setx TAVILY_API_KEY "your_tavily_api_key"
 
 Option C — via Streamlit UI
 - In the sidebar, select Groq and paste your GROQ API key.
-- For use cases using web search, paste your Tavily API key.
+- For web-enabled use cases (Chatbot with web, AI News Summarizer, some ChatWithPdf routes), paste your Tavily API key.
 
 5) Run the app
 ```powershell
@@ -130,32 +132,34 @@ How to use
 - Paste your GROQ API key
 - Select a Use Case
 
-2) For Chatbot with web or AI News Summarizer:
-- Paste your Tavily API key
+2) Chatbot with web
+- Paste your TAVILY_API_KEY to enable live web results via tools.
 
-3) For AI News Summarizer:
-- Pick Daily/Weekly/Monthly and click “Fetch Latest AI News”, then ask follow-ups in the chat input
+3) AI News Summarizer
+- Choose frequency (daily/weekly/monthly/year).
+- Optionally provide a custom query in the UI or type JSON in the chat:
+  - {"frequency":"weekly","news_query":"Generative AI startups funding"}
+- After fetching/summarizing, the markdown is saved to ./AINews/<frequency>_summary.md.
 
-4) For ChatWithPdf:
-- Optionally paste your Tavily API key (recommended if questions might route to web_search)
-- Upload a PDF
-- Ask your question in the chat input
-- The terminal will print debug info about PDF chunks (first few splits)
+4) ChatWithPdf
+- Optionally paste your TAVILY_API_KEY (if routing to web_search is desired).
+- Upload a PDF and ask your question.
+- Terminal prints first few chunk previews for debugging.
 
 --------------------------------------------------------------------------------
 
 Architecture overview
 
 - Streamlit UI (src/langgraphagenticai/ui/streamlitui):
-  - loadui.py collects keys, model, use case, and pdf upload path
+  - loadui.py collects keys, model, use case, and PDF upload path
   - display_result.py renders outputs per use case (with safety checks)
 
 - Graph Builder (src/langgraphagenticai/graph/graph_builder.py):
-  - Builds different graphs per use case on demand
-  - For ChatWithPdf:
-    - Creates PDFTool(pdf_path) -> FAISS -> retriever
-    - Initializes RAG components (router, graders, rag prompt/chain)
-    - Wires nodes and conditional edges:
+  - Builds graphs per use case on demand
+  - ChatWithPdf wiring:
+    - PDFTool(pdf_path) -> FAISS -> retriever
+    - Router, graders, RAG prompt/chain
+    - Edges:
       START
         -> route_question (vectorstore | web_search)
         -> retrieve -> grade_docs -> (transform_query | generate)
@@ -165,15 +169,15 @@ Architecture overview
 - Nodes:
   - basic_chatbot_node.py — Basic chat
   - chatbot_with_toolnode.py — LLM with tools (Tavily + Wikipedia)
-  - ai_news_node.py — Tavily client fetch + LLM summarization + write markdown
-  - chatwithpdf_node.py — RAG components: router, graders, generator, query rewriter, and node functions
+  - ai_news_node.py — TavilyClient fetch + LLM summarization, JSON-friendly inputs, writes markdown
+  - chatwithpdf_node.py — RAG components: router, graders, generator, query rewriter, nodes
 
 - Tools:
   - basic_tool.py — returns TavilySearch and Wikipedia tools + ToolNode
-  - PDFtool.py — UnstructuredPDFLoader/TextSplitter/FAISS/HuggingFace embeddings; returns retriever
+  - PDFtool.py — Unstructured/PyPDF loading, text splitting, FAISS, HuggingFace embeddings
 
 - State:
-  - State.py — State/GraphState TypedDict and Pydantic models for structured outputs
+  - State.py — Graph/Message state and structured outputs
 
 --------------------------------------------------------------------------------
 
@@ -182,8 +186,8 @@ Environment variables
 Required
 - GROQ_API_KEY — Groq LLM key
 
-Optional, recommended for web-enabled flows
-- TAVILY_API_KEY — for Tavily web search (used by “Chatbot with web”, “AI News Summarizer”, and routing in “ChatWithPdf”)
+Required for web-enabled flows
+- TAVILY_API_KEY — used by “Chatbot with web”, “AI News Summarizer”, and web routes in “ChatWithPdf”
 
 Set in Windows PowerShell (temporary)
 ```powershell
@@ -199,40 +203,39 @@ Troubleshooting
   - Cause: GROQ_API_KEY missing when creating the Groq client.
   - Fix: Set GROQ_API_KEY via environment variable or the sidebar and retry.
 
-- Error: ChatWithPdf flow failed — list index out of range
-  - Cause: Attempted to access an empty list of documents/chunks.
-  - Fix: Ensure the uploaded PDF has extractable text. The app prints how many chunks were generated. For scanned PDFs, try a different loader or OCR before upload.
+- AI News returns empty or errors
+  - Ensure TAVILY_API_KEY is set and valid.
+  - Try a simpler query or a different frequency.
+
+- ChatWithPdf: list index out of range / no chunks
+  - PDF may have no extractable text. Try another PDF or use a loader that supports your format (scanned PDFs may require OCR).
+  - Check terminal logs for “[ChatWithPdf] Loaded X document(s)” and “Produced Y chunk(s)”.
 
 - 'NoneType' object has no attribute 'invoke'
-  - Cause: A component like retriever or a tool was None and .invoke(...) was called.
-  - Fix: Ensure a PDF is uploaded (so retriever is built) and supply TAVILY_API_KEY if using web search paths.
+  - A component (retriever or tool) was None, but .invoke(...) was called.
+  - Ensure a PDF is uploaded (to build the retriever) and provide TAVILY_API_KEY if routing to web_search.
 
 - Error processing PDF: 'Document' object is not subscriptable
-  - Cause: Code assumed a list of Document(s) but received a single Document.
-  - Fix: The UI normalizes results to a list before slicing (already handled in display_result.py). If you changed return shapes, ensure you always pass a list for documents.
+  - Caused by treating a single Document as a list.
+  - The UI normalizes results to a list before slicing; keep returns consistent (prefer lists of Document).
 
-- Web search returns empty or errors
-  - Ensure TAVILY_API_KEY is set
-  - Ask questions that are better answered by the PDF to remain in vectorstore path
-
-- Windows encoding issues in terminal
-  - The app enforces UTF-8 for stdout/stderr and file writes in main.py
+- HuggingFace embeddings download errors (MaxRetryError / HTTPSConnectionPool)
+  - Network/proxy blocking downloads. Use stable internet, set proxies/CA bundle, or pre-download the model and point embeddings to a local folder.
 
 --------------------------------------------------------------------------------
 
 Notes and limitations
-- Embeddings: Uses HuggingFace all-MiniLM-L6-v2 via langchain-huggingface.
-- Vectorstore: In-memory FAISS; not persisted to disk.
-- PDF parsing: Uses UnstructuredPDFLoader by default; if your PDF is image-only/scanned, text extraction may be limited.
-- LLMs: UI lists Groq as primary. OpenAI appears in UI config but is not wired in this codebase.
-- Internet tools: Tavily is used both via langchain_tavily (tools) and tavily client (AI News Summarizer).
+- Embeddings: HuggingFace all-MiniLM-L6-v2 via langchain-huggingface.
+- Vectorstore: In-memory FAISS; not persisted.
+- PDF parsing: Unstructured/PyPDF; scanned PDFs may require OCR.
+- LLMs: Groq first-class; OpenAI appears in UI config but is not wired.
 
 --------------------------------------------------------------------------------
 
 Development tips
 - Reinstall dependencies when changing Python versions: pip install -r requirements.txt
 - For debugging PDF splits, check terminal logs after uploading a PDF in ChatWithPdf.
-- If you need to test without internet keys, stick to “Basic Chatbot” and PDF-only questions that route to “vectorstore”.
+- Keep directory casing consistent on Windows when committing paths (Git is case-sensitive; NTFS is not).
 
 --------------------------------------------------------------------------------
 
