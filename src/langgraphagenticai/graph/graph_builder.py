@@ -13,6 +13,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from src.langgraphagenticai.Nodes.ai_news_node import AINewsNode
 from src.langgraphagenticai.Nodes.chatwithpdf_node import retrieve , generate , grade_docs , transform_query , route_question, decide_to_generate , grade_generation_v_documents_and_question
 from src.langgraphagenticai.tools.PDFtool import PDFTool
+from src.langgraphagenticai.tools.WebTool import WebTool
 from langchain_tavily  import TavilySearch
 from src.langgraphagenticai.Nodes.chatwithpdf_node import init_components
 
@@ -80,13 +81,17 @@ class GraphBuilder:
         self.graph_builder.add_edge("save_result",END)
 
 
-    def chat_with_pdf_graph(self , pdf_path: str ,tavily_key : Optional[str] = None ,user_input: dict = None):
+    def chat_with_pdf_graph(self , pdf_path: Optional[str] = None , urls: list[str] = None,tavily_key : Optional[str] = None ,user_input: dict = None):
         """
         Build the nodes for chat-with-pdf. This function DOES NOT run websearch or retriever
         at graph build time; it registers functions (wrappers) that will run when the graph executes.
         """
-        pdf_tool = PDFTool(pdf_path)
-        retriever = pdf_tool.get_retriever()
+        if urls:
+            web_tool = WebTool(urls)
+            retriever = web_tool.get_retriever()
+        else:   
+            pdf_tool = PDFTool(pdf_path)
+            retriever = pdf_tool.get_retriever()
         if tavily_key:  
             os.environ["TAVILY_API_KEY"] = tavily_key
         web_search_tool = TavilySearch(k=3) if os.environ.get("TAVILY_API_KEY") else None
@@ -199,6 +204,15 @@ class GraphBuilder:
 
             self.graph_builder = StateGraph(GraphState)
             self.chat_with_pdf_graph(pdf_path= pdf_path ,tavily_key=tavily_key,user_input=user_input)
+            return self.graph_builder.compile()
+        elif usecase == "ChatWithWebsite":
+            urls = None
+            if user_input:
+                urls = user_input.get("urls")
+            if not urls:
+                raise ValueError("No URLs provided. Please enter at least one URL.")
+            self.graph_builder = StateGraph(GraphState)
+            self.chat_with_pdf_graph(urls=urls, user_input=user_input)
             return self.graph_builder.compile()
         # default fallback
         return self.graph_builder.compile()
