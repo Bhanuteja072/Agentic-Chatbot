@@ -158,3 +158,49 @@ class DisplayResultStreamlit:
 
                 except Exception as e:
                     st.error(f"Error processing PDF: {str(e)}")
+
+        elif usecase == "ChatWithWebsite":
+            with st.spinner("Fetching website(s) and generating answer... ⏳"):
+                try:
+                    result = graph.invoke({"question": user_message})
+                    answer = result.get("generation")
+                    docs = result.get("documents", [])
+
+                    # Normalize to a list of Document
+                    if docs is None:
+                        docs = []
+                    elif isinstance(docs, Document):
+                        docs = [docs]
+                    elif isinstance(docs, dict) and "page_content" in docs:
+                        docs = [Document(page_content=docs["page_content"], metadata=docs.get("metadata", {}))]
+                    elif not isinstance(docs, list):
+                        docs = [Document(page_content=str(docs))]
+
+                    # Show user message
+                    with st.chat_message("user"):
+                        st.write(user_message)
+
+                    # Show assistant answer
+                    if answer:
+                        with st.chat_message("assistant"):
+                            st.subheader("🌐 Answer")
+                            st.write(answer)
+
+                    # Show supporting chunks grouped by URL
+                    if docs:
+                        # Group chunks by source URL
+                        from collections import defaultdict
+                        grouped_docs = defaultdict(list)
+                        for d in docs:
+                            src = d.metadata.get("source", "Unknown source")
+                            grouped_docs[src].append(d)
+
+                        st.subheader("🔎 Supporting Website Chunks")
+                        for source, source_docs in grouped_docs.items():
+                            with st.expander(f"Source: {source}"):
+                                for i, d in enumerate(source_docs[:5]):  # limit 5 per site
+                                    st.markdown(f"**Chunk {i+1}:**")
+                                    st.write(d.page_content)
+
+                except Exception as e:
+                    st.error(f"Error processing website(s): {str(e)}")
