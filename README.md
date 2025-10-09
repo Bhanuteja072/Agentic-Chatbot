@@ -239,4 +239,4 @@ Development tips
 --------------------------------------------------------------------------------
 
 Acknowledgements
-- LangGraph, LangChain, FAISS, HuggingFace, Groq, Tavily, Wikipedia community tools.
+- LangGraph, LangChain, FAISS, HuggingFace, Groq, Tavily.
