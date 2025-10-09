@@ -33,34 +33,32 @@ class DisplayResultStreamlit:
         graph = self.graph
         user_message = self.user_message
         if usecase == "Basic Chatbot":
-                  # ensure each Streamlit session has a persistent thread_id
+            # Each Streamlit session gets its own thread_id
             if "thread_id" not in st.session_state:
+                import uuid
                 st.session_state.thread_id = str(uuid.uuid4())
-                # Initialize UI chat history
+
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
+
             st.session_state.chat_history.append(("user", user_message))
 
-            # state_input = {"messages": [("user", user_message)]}
-            # Wrap user message as HumanMessage so MemorySaver works
-            state_input = {"messages": [HumanMessage(content=user_message)]}
+            # Pass session_id to BasicChatbotNode
+            state_input = {
+                "messages": [HumanMessage(content=user_message)],
+                "session_id": st.session_state.thread_id
+            }
 
-
-
-            # Stream response from the graph
-            for event in graph.stream(state_input,config={"configurable": {"thread_id": st.session_state.thread_id}}):
+            # Stream response
+            for event in graph.stream(state_input):
                 for value in event.values():
                     assistant_message = value["messages"][0][1]
-                    # Append assistant reply to chat history
-              
                     st.session_state.chat_history.append(("assistant", assistant_message))
-            
-    # Render the full chat history
+
+            # Render full chat history
             for role, msg in st.session_state.chat_history:
                 with st.chat_message(role):
                     st.write(msg)
-
-
 
 
 
