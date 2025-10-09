@@ -184,6 +184,16 @@ class LoadStreamlitUI:
                     self.user_controls["pdf_path"] = None
                     st.info("Upload a PDF to start chatting with it.")
 
+            elif selected_usecase == "ChatWithWebsite":
+                url_input = st.text_input("🌐 Enter website URL")
+                if url_input:
+                    # Support multiple URLs (comma-separated)
+                    urls = [u.strip() for u in url_input.split(",") if u.strip()]
+                    self.user_controls["urls"] = urls
+                else:
+                    self.user_controls["urls"] = None
+                    st.info("Enter one or more website URLs to start chatting with it.")
+
             # === Basic Chatbot / Chatbot with Web ===
             elif selected_usecase in ["Basic Chatbot", "Chatbot with web"]:
                 st.session_state.IsFetchButtonClicked = False
