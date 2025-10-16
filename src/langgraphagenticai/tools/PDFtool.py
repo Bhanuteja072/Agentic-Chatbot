@@ -6,6 +6,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.schema import Document
 # from langchain.document_loaders import UnstructuredPDFLoader
 from langchain_community.document_loaders import UnstructuredPDFLoader
+import streamlit as st
 
 class PDFTool:
     def __init__(self, pdf_path: str):
@@ -46,8 +47,11 @@ class PDFTool:
         doc_splits = text_splitter.split_documents(docs_list)
         self.vectorstore = FAISS.from_documents(doc_splits, self.embedding)
         self.retriever = self.vectorstore.as_retriever()
-
     def get_retriever(self):
         if self.retriever is None:
             self._prepare_pdf()
         return self.retriever
+# ...existing code...
+@st.cache_resource
+def build_pdf_retriever(pdf_path: str):
+    return PDFTool(pdf_path).get_retriever()
