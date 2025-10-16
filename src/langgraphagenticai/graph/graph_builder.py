@@ -12,7 +12,9 @@ from src.langgraphagenticai.Nodes.chatbot_with_toolnode import ChatbotWithTool
 from langgraph.checkpoint.memory import MemorySaver
 from src.langgraphagenticai.Nodes.ai_news_node import AINewsNode
 from src.langgraphagenticai.Nodes.chatwithpdf_node import retrieve , generate , grade_docs , transform_query , route_question, decide_to_generate , grade_generation_v_documents_and_question
-from src.langgraphagenticai.tools.PDFtool import PDFTool
+# from src.langgraphagenticai.tools.PDFtool import PDFTool
+from src.langgraphagenticai.tools.PDFtool import build_pdf_retriever
+
 from src.langgraphagenticai.tools.WebTool import WebTool
 from langchain_tavily  import TavilySearch
 from src.langgraphagenticai.Nodes.chatwithpdf_node import init_components
@@ -90,8 +92,9 @@ class GraphBuilder:
             web_tool = WebTool(urls)
             retriever = web_tool.get_retriever()
         else:   
-            pdf_tool = PDFTool(pdf_path)
-            retriever = pdf_tool.get_retriever()
+            retriever = build_pdf_retriever(pdf_path)
+            # pdf_tool = PDFTool(pdf_path)
+            # retriever = pdf_tool.get_retriever()
         if tavily_key:  
             os.environ["TAVILY_API_KEY"] = tavily_key
         web_search_tool = TavilySearch(k=3) if os.environ.get("TAVILY_API_KEY") else None
@@ -130,21 +133,22 @@ class GraphBuilder:
 
         # chat_with_pdf_node=ChatWithPdfNode()
 
-        self.graph_builder.add_node("web_search",websearch)
+        # self.graph_builder.add_node("web_search",websearch)
         self.graph_builder.add_node("retrieve",lambda s: retrieve(s, retriever))
         self.graph_builder.add_node("transform_query",lambda s: transform_query(s, question_rewriter))
         self.graph_builder.add_node("grade_docs",lambda s: grade_docs(s, retrieval_grader))
         self.graph_builder.add_node("generate",lambda s: generate(s, rag_chain))
 
-        self.graph_builder.add_conditional_edges(
-            START,
-            lambda s : route_question(s , question_router),
-            {
-                "web_search": "web_search",
-                "vectorstore": "retrieve",
-            }
-        )
-        self.graph_builder.add_edge("web_search","generate")
+        # self.graph_builder.add_conditional_edges(
+        #     START,
+        #     lambda s : route_question(s , question_router),
+        #     {
+        #         "web_search": "web_search",
+        #         "vectorstore": "retrieve",
+        #     }
+        # )
+        self.graph_builder.add_edge(START,"retrieve")
+        # self.graph_builder.add_edge("web_search","generate")
         self.graph_builder.add_edge("retrieve", "grade_docs")
         self.graph_builder.add_conditional_edges(
             "grade_docs",
