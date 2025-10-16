@@ -23,7 +23,11 @@
 import os
 import streamlit as st
 from langchain_groq import ChatGroq
-
+@st.cache_resource
+def create_groq_llm(api_key: str, model: str, temperature: float = 0.2, max_tokens: int = 512):
+    # set env for downstream libs expecting it
+    os.environ["GROQ_API_KEY"] = api_key
+    return ChatGroq(api_key=api_key, model=model, temperature=temperature, max_tokens=max_tokens)
 class GroqLlm:
     def __init__(self, user_controls_input):
         self.user_controls_input = user_controls_input
@@ -55,8 +59,8 @@ class GroqLlm:
             os.environ["GROQ_API_KEY"] = groq_api_key
 
             # Instantiate ChatGroq with explicit api_key (this avoids relying only on env)
-            llm = ChatGroq(api_key=groq_api_key, model=selected_llm_model)
-            return llm
+            return create_groq_llm(groq_api_key, selected_llm_model)
+
 
         except Exception as e:
             # Show friendly error and return None so main() can show a single error message
