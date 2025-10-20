@@ -1,12 +1,13 @@
 # LangGraph Agentic AI — Stateful Agentic Graphs with Streamlit
 
-Build and run stateful, production-style AI workflows using LangGraph + LangChain with a Streamlit UI. This project ships multiple use cases (basic chat, tool-augmented chat, AI news summarization, Chat-With-PDF RAG, and Chat-With-Website RAG) wired as graphs with clear nodes, edges, and state.
+Build and run stateful, production-style AI workflows using LangGraph + LangChain with a Streamlit UI. This project ships multiple use cases (basic chat, tool-augmented chat, AI news summarization, Chat-With-PDF RAG, Chat-With-Website RAG, and AI Blog Generator) wired as graphs with clear nodes, edges, and state.
 
 Highlights
 - Streamlit UI with selectable LLM provider and use cases
 - Groq LLM integration with model selector
 - Tools: Tavily web search (optional), Wikipedia
 - RAG pipelines for PDF and Website content (FAISS + HuggingFace embeddings)
+- AI Blog Generator with topic and optional translation flows (Hindi/French)
 - Graph-based orchestration powered by LangGraph
 - Beginner-friendly setup and usage on Windows
 
@@ -23,7 +24,10 @@ Project structure
     - chatbot_with_toolnode.py — chat with tools
     - ai_news_node.py — AI news fetch + LLM summarization
     - chatwithpdf_node.py — RAG nodes (router/graders/generator/query rewriter)
-  - state/State.py — TypedDicts for State/GraphState and structured output models
+    - blog_node.py — blog title/content generation, routing, translation
+  - state/
+    - State.py — TypedDicts for State/GraphState and structured output models
+    - blog_state.py — BlogState for blog generator graph
   - tools/
     - basic_tool.py — TavilySearch + Wikipedia tools and ToolNode
     - PDFtool.py — PDF loading/splitting, FAISS retriever
@@ -65,6 +69,12 @@ Use cases
 - The app fetches pages via requests + BeautifulSoup, cleans text, chunks, embeds, and builds a FAISS retriever.
 - Same RAG flow used as ChatWithPdf; optional web_search routing via Tavily if key provided.
 - UI shows answer and supporting chunks grouped by source URL.
+
+6) AI Blog Generator
+- Generate long-form, SEO-friendly blogs from a topic.
+- Flow A (Topic): H1 title → full Markdown blog (intro, TOC, 8–12 sections, conclusion).
+- Flow B (Language): Title → content → route → optional translation (Hindi/French).
+- Renders on the main page (not sidebar). Supports large outputs; tune token limits via env.
 
 --------------------------------------------------------------------------------
 
@@ -151,13 +161,18 @@ How to use
 - Ask your question; the app builds a retriever from those pages.
 - Optional web routing via Tavily if TAVILY_API_KEY is set.
 
+6) AI Blog Generator
+- Enter a topic in the main page and click Generate.
+- Optional: select a translation target (Hindi or French) to run the language flow.
+- If outputs truncate, raise token limits (see Troubleshooting).
+
 --------------------------------------------------------------------------------
 
 Architecture overview
 
 - UI (src/langgraphagenticai/ui/streamlitui)
-  - loadui.py: collects keys, model, use case, PDF upload, URLs
-  - display_result.py: renders per-use case outputs; normalizes docs for display
+  - loadui.py: collects keys, model, use case, PDF upload, URLs; renders Blog Generator header on main page
+  - display_result.py: renders per-use case outputs; normalizes docs/blog outputs and shows debug state in an expander
 
 - Graph builder (src/langgraphagenticai/graph/graph_builder.py)
   - Builds graphs per use case
@@ -170,12 +185,16 @@ Architecture overview
         -> retrieve -> grade_docs -> (transform_query | generate)
         -> generate -> grade_generation_v_documents_and_question -> (useful | not useful | not supported)
         -> END
+  - AI Blog Generator:
+    - Topic graph: START -> title -> content -> END
+    - Language graph: START -> title -> content -> route -> (hindi|french) -> END
 
 - Nodes
   - basic_chatbot_node.py — basic chat
   - chatbot_with_toolnode.py — LLM with tools (Tavily + Wikipedia)
   - ai_news_node.py — Tavily client fetch + LLM summarization, JSON-friendly
   - chatwithpdf_node.py — router/graders/generator/query rewriter + node functions
+  - blog_node.py — title/content generation, routing, translation
 
 - Tools
   - basic_tool.py — TavilySearch, Wikipedia tools + ToolNode
@@ -184,6 +203,7 @@ Architecture overview
 
 - State
   - State.py — graph state definitions and Pydantic models for structured outputs
+  - blog_state.py — BlogState typed state for blog graphs
 
 --------------------------------------------------------------------------------
 
@@ -195,11 +215,24 @@ Required
 For web-enabled flows (recommended)
 - TAVILY_API_KEY — used by “Chatbot with web”, “AI News Summarizer”, and web routes in RAG
 
+Optional (Blog Generator, long-form)
+- GROQ_MAX_TOKENS — override max tokens (e.g., 3000–4096) for long content
+
 Set in Windows PowerShell (temporary)
 ```powershell
 $env:GROQ_API_KEY = 'your_groq_api_key'
 $env:TAVILY_API_KEY = 'your_tavily_api_key'
+$env:GROQ_MAX_TOKENS = '3000'
 ```
+
+--------------------------------------------------------------------------------
+
+Performance tips
+
+- Cache heavy objects (embeddings, vectorstores, LLMs, compiled graphs) with st.cache_resource.
+- Persist FAISS per PDF/URL set (hash input) to avoid rebuilding on reruns.
+- Prefer PyPDFLoader; fallback to Unstructured for tricky PDFs.
+- Pre-download HuggingFace model locally and set HF_EMBEDDINGS_LOCAL_DIR.
 
 --------------------------------------------------------------------------------
 
@@ -209,7 +242,7 @@ Troubleshooting
   - Provide GROQ_API_KEY via env or sidebar.
 
 - ChatWithPdf/ChatWithWebsite: 'NoneType' object has no attribute 'invoke'
-  - A component (retriever/tool) is None. Ensure a PDF is uploaded or URLs are provided; set TAVILY_API_KEY if you expect web routing.
+  - Ensure a PDF is uploaded or URLs are provided; set TAVILY_API_KEY if you expect web routing.
 
 - Error processing PDF: 'Document' object is not subscriptable
   - Occurs when code assumes list but receives a single Document. UI normalizes results to lists.
@@ -220,23 +253,10 @@ Troubleshooting
 - Windows symlink warning from huggingface_hub
   - Enable Developer Mode (Settings > Privacy & Security > For developers) or ignore (warning only). To avoid symlinks, pre-download with local_dir_use_symlinks=False.
 
---------------------------------------------------------------------------------
-
-Notes and limitations
-- Embeddings: HuggingFace all-MiniLM-L6-v2 via langchain-huggingface.
-- Vectorstores: In-memory FAISS; not persisted.
-- PDF parsing: Unstructured/PyPDF; scanned PDFs may require OCR.
-- Website parsing: requests + BeautifulSoup; quality depends on site HTML.
-- LLMs: Groq is primary. OpenAI appears in UI config but isn’t wired here.
-
---------------------------------------------------------------------------------
-
-Development tips
-- Reinstall deps when switching Python versions: pip install -r requirements.txt
-- Debug PDF/URL splits in terminal; first chunk previews are printed.
-- Keep directory casing consistent when committing on Windows.
+- Blog content truncates
+  - Raise token limit via $env:GROQ_MAX_TOKENS (e.g., 3000–4096) or bind higher max_tokens for the content node.
 
 --------------------------------------------------------------------------------
 
 Acknowledgements
-- LangGraph, LangChain, FAISS, HuggingFace, Groq, Tavily.
+- LangGraph, LangChain, FAISS, HuggingFace, Groq, Tavily, BeautifulSoup, Wikipedia community tools.
