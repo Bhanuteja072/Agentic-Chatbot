@@ -6,9 +6,11 @@ import os
 from langchain.schema import Document
 from src.langgraphagenticai.state.State import State
 from src.langgraphagenticai.state.State import GraphState
+from src.langgraphagenticai.state.blog_state import BlogState
 from src.langgraphagenticai.Nodes.basic_chatbot_node import BasicChatbotNode
 from src.langgraphagenticai.tools.basic_tool import get_tools,create_tool_node
 from src.langgraphagenticai.Nodes.chatbot_with_toolnode import ChatbotWithTool
+from src.langgraphagenticai.Nodes.blog_node import BlogNode
 from langgraph.checkpoint.memory import MemorySaver
 from src.langgraphagenticai.Nodes.ai_news_node import AINewsNode
 from src.langgraphagenticai.Nodes.chatwithpdf_node import retrieve , generate , grade_docs , transform_query , route_question, decide_to_generate , grade_generation_v_documents_and_question
@@ -170,7 +172,54 @@ class GraphBuilder:
                 },
         )
 
- 
+    def build_topic_graph(self):
+            """
+            Build a graph to generate blog based on the topic
+            """
+            graph = self.graph_builder
+
+            blog_node_obj = BlogNode(self.llm)
+
+            graph.add_node("title", blog_node_obj.generate_blog_title)
+            graph.add_node("content", blog_node_obj.generate_blog_content)
+
+            graph.add_edge(START, "title")
+            graph.add_edge("title", "content")
+            graph.add_edge("content", END)
+
+            return graph
+    
+
+    
+    def build_language_graph(self):
+        """
+        Build a graph to generate blog based on the language
+        """
+
+        graph = self.graph_builder
+        blog_node_obj = BlogNode(self.llm)
+
+        graph.add_node("title", blog_node_obj.generate_blog_title)
+        graph.add_node("content", blog_node_obj.generate_blog_content)
+        graph.add_node("route", blog_node_obj.route)
+        graph.add_node("hindi_translation", lambda state: blog_node_obj.translation({**state, "current_language": "hindi"}))
+        graph.add_node("french_translation", lambda state: blog_node_obj.translation({**state, "current_language": "french"}))
+
+        # Edges
+        graph.add_edge(START, "title")
+        graph.add_edge("title", "content")
+        graph.add_edge("content", "route")
+        graph.add_conditional_edges(
+            "route",
+            blog_node_obj.route_decision,
+            {
+                "hindi": "hindi_translation",
+                "french": "french_translation"
+            }
+        )
+        graph.add_edge("hindi_translation", END)
+        graph.add_edge("french_translation", END)
+        return graph
 
 
 
@@ -218,8 +267,23 @@ class GraphBuilder:
             self.graph_builder = StateGraph(GraphState)
             self.chat_with_pdf_graph(urls=urls, user_input=user_input)
             return self.graph_builder.compile()
+        
+        elif usecase == "AI Blog Generator":
+            language = user_input.get("language", "")
+            # topic = user_input.get("topic", "")
+            self.graph_builder = StateGraph(BlogState)
+
+            # You will later define self.ai_blog_graph() for blog logic (title + content + optional translation)
+            # For now, assume it exists and takes topic + language parameters
+            if language:
+                self.build_language_graph()
+            else:
+                self.build_topic_graph()
+            return self.graph_builder.compile()
+
         # default fallback
         return self.graph_builder.compile()
+
 
 
         
