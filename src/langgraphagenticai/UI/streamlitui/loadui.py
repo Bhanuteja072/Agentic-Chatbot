@@ -121,6 +121,7 @@ class LoadStreamlitUI:
             llm_options = self.config.get_llm_options()
             usecase_options = self.config.get_usecase_options()
 
+
             # LLM selection
             self.user_controls["selected_llm"] = st.selectbox("Select LLM", llm_options)
 
@@ -194,10 +195,34 @@ class LoadStreamlitUI:
                     self.user_controls["urls"] = None
                     st.info("Enter one or more website URLs to start chatting with it.")
 
+    
+           
+
+
             # === Basic Chatbot / Chatbot with Web ===
             elif selected_usecase in ["Basic Chatbot", "Chatbot with web"]:
                 st.session_state.IsFetchButtonClicked = False
                 st.session_state.timeframe = ""
                 st.session_state.user_prompt = ""
+
+        
+        if selected_usecase == "AI Blog Generator":
+            st.subheader("📝 AI Blog Generator")
+            st.markdown(
+                    '<div class="muted">Generate SEO-friendly blog titles and full blog content. '
+                    'Optionally translate content to supported languages.</div>',
+                    unsafe_allow_html=True
+                )
+            st.markdown("")
+
+            # topic = st.text_input("✏️ Enter Blog Topic", placeholder="e.g. How to optimize Python code for performance")
+            language = st.selectbox("🌐 Translate to (optional)", ["", "hindi", "french"])
+            # generate = st.button("🚀 Generate Blog")
+
+            # self.user_controls["topic"] = topic
+            self.user_controls["language"] = language
+            # self.user_controls["generate_blog"] = generate
+
+
 
         return self.user_controls
