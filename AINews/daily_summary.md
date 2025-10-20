@@ -1,18 +1,11 @@
 #Daily AI News Summary
 
-**AI‑related news (sorted by IST date, newest first)**  
+### 2025-10-18
+- [Afghanistan have withdrawn from their Twenty20 international tri-series in Pakistan next month following the death of three local cricketers](https://www.reuters.com/sports/cricket/afghanistan-pull-out-t20-tri-series-pakistan-amid-conflict-2025-10-18/)
+- [Highlights from day three of the India Championship at the Delhi Golf Club](https://www.skysports.com/golf/video/30998/13452231/nakajima-leading-with-ryder-cup-stars-chasing-india-championship-day-three-highlights)
+- [India Championship Day three highlights](https://www.skysports.com/golf/video/30998/13452231/keita-nakajima-leading-with-ryder-cup-stars-chasing-india-championship-day-three-highlights)
+- [A waterman died by suicide in front of a panchayat office in Karnataka's Chamarajanagar district, alleging non-payment of salary for the past 27 months and mental harassment by local officials](https://www.ndtv.com/india-news/no-salary-for-2-years-karnataka-man-kills-self-in-front-of-government-office-bjp-slams-congress-9477584)
+- [England head coach Charlotte Edwards has vowed England's "best cricket" is yet to come ahead of their World Cup showdown with co-hosts India on Sunday](https://www.skysports.com/cricket/news/12123/13452346/india-vs-england-charlotte-edwards-vows-best-cricket-is-to-come-from-her-team-ahead-of-world-cup-showdown)
 
-### 2025‑09‑24  
-- **ITNews – AI‑infrastructure round‑table in Sydney** – Industry leaders discussed modernising data‑centre infrastructure for the AI era, highlighting cloud, GPU and decoy‑network strategies. [(link)](https://www.itnews.com.au/gallery/in-pictures-nextdc-vocus-ai-infrastructure-roundtable-in-sydney-620525)  
-- **Business Insider – Sam Altman’s 1 GW‑per‑week AI‑infrastructure goal** – OpenAI CEO announced an ambitious plan to build factories that generate a gigawatt of AI compute each week, enough power for 876 000 homes. [(link)](https://www.businessinsider.com/sam-altman-ai-infrastructure-1-gw-per-week-stargate-2025-9)  
-- **Los Angeles Times – Nvidia to invest $100 bn in OpenAI** – Nvidia will fund OpenAI’s data‑centre expansion with chips and cash, cementing a major AI‑hardware partnership. [(link)](https://www.latimes.com/business/story/2025-09-23/nvidia-to-invest-100-billion-in-openai-to-build-data-centers)  
-- **MobiHealthNews – HIMSS CEO on emerging AI use‑cases** – Hal Wolf highlighted AI’s impact on supply‑chain optimisation, knowledge‑management and patient‑engagement at the HIMSS AI Leadership Summit. [(link)](https://www.mobihealthnews.com/video/existing-and-emerging-ai-use-cases-excite-himss-ceo)  
-
-### 2025‑09‑23  
-- **RCR Wireless – SoftBank, OpenAI & Oracle $500 bn “Stargate” data‑centre programme** – The trio announced a massive AI‑infrastructure venture in the U.S., aiming to create a trillion‑dollar AI industrial park. [(link)](https://www.rcrwireless.com/20250923/ai-infrastructure/softbank-ai-2)  
-- **Edie – Digital Catapult backs AI‑enabled agriculture innovations** – New AI tools are being funded to improve biodiversity monitoring, emissions reporting and precision farming. [(link)](https://www.edie.net/from-biodiversity-monitoring-to-emissions-reporting-digital-catapult-backs-ai-enabled-agriculture-innovations/)  
-- **WKYC – Cleveland Clinic AI platform for early sepsis detection** – An AI system processes electronic health records in real time, flagging sepsis up to seven times earlier than traditional methods. [(link)](https://www.wkyc.com/article/news/health/cleveland-clinic-sepsis-artificial-intelligence-ohio-florida-bayesian-health-electronic-medical-records/95-00ffb824-501b-4f83-8a87-7d6af5e90d77)  
-- **CSOonline – Six novel AI applications in cybersecurity** – AI now automates threat‑alert correlation, generates analyst‑ready narratives and creates realistic decoy environments for faster incident response. [(link)](https://www.csoonline.com/article/4059116/6-novel-ways-to-use-ai-in-cybersecurity.html)  
-- **Biospace – Median Technologies launches eyonis® AI‑powered SaMD** – The company’s AI‑driven imaging suite aids cancer diagnosis and supports oncology drug‑development pipelines. [(link)](https://www.biospace.com/press-releases/median-technologies-business-update-following-successful-financing)  
-- **ITNews – Google revises AI safety framework, adds manipulation protection** – Google DeepMind introduces “Security Level 4” controls for highly autonomous models and new safeguards against manipulative AI. [(link)](https://www.itnews.com.au/news/googles-revised-ai-safety-framework-adds-manipulation-protection-620498)  
-- **Devdiscourse – AI governance in Pakistan’s flood response** – Authorities cite AI‑driven decision‑making tools as key to coordinating relief efforts amid catastrophic flooding. [(link)](https://www.devdiscourse.com/article/headlines/3637297-pakistans-deluge-impact-on-economy-and-agriculture)  
+### 2025-10-17
+- [The BKT Tyres Men’s ODI Series between Australia and India was officially launched at Perth Stadium on Friday](https://www.telecomasia.net/blog/australia-v-india-odi-series-launch-celebrates-rivalry-and-new-beginnings-at-perth-stadium/)
