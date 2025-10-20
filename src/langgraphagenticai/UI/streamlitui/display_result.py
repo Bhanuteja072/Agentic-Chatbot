@@ -2,6 +2,7 @@ import streamlit as st
 from langchain_core.messages import HumanMessage,AIMessage,ToolMessage
 import json
 import uuid
+from typing import Optional 
 import unicodedata
 from langchain.schema import Document
 
@@ -17,10 +18,16 @@ def normalize_text(text: str) -> str:
 
 
 class DisplayResultStreamlit:
-    def __init__(self,usecase,graph,user_message):
+    def __init__(self,usecase,graph,user_message,language : Optional[str]=None):
         self.usecase= usecase
         self.graph = graph
         self.user_message = user_message
+        if language:
+            self.language = language
+
+        self.language = language or ""
+
+
 
         
         # # ensure each Streamlit session has a persistent thread_id
@@ -29,6 +36,7 @@ class DisplayResultStreamlit:
 
 
     def display_result_on_ui(self):
+
         usecase= self.usecase
         graph = self.graph
         user_message = self.user_message
@@ -158,6 +166,35 @@ class DisplayResultStreamlit:
 
                 except Exception as e:
                     st.error(f"Error processing PDF: {str(e)}")
+
+        elif usecase == "AI Blog Generator":
+            with st.spinner("Generating blog... ⏳"):
+
+                try:
+                    if self.language:
+                        state = graph.invoke({"topic": user_message, "current_language": self.language})
+                    else:
+                        state = graph.invoke({"topic": user_message})
+
+                    # === Display structured results ===
+                    blog = state.get("blog") if isinstance(state, dict) else getattr(state, "blog", None)
+                    if blog:
+                        title = blog.get("title") if isinstance(blog, dict) else None
+                        content = blog.get("content") if isinstance(blog, dict) else None
+                        if title:
+                            st.markdown(f"## {title}")
+                        if content:
+                            st.markdown(content, unsafe_allow_html=True)
+                    else:
+                        st.info("No structured 'blog' field found. Showing raw state below.")
+                        st.json(state)
+
+                    st.subheader("📦 Raw State")
+                    st.json(state)
+
+                except Exception as e:
+                    st.error(f"Error: {e}")
+                    st.exception(e)
 
         elif usecase == "ChatWithWebsite":
             with st.spinner("Fetching website(s) and generating answer... ⏳"):
