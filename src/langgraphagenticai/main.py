@@ -106,8 +106,65 @@ def load_langgraph_agenticai_app():
 
     usecase = user_input.get("selected_usecase", "")
 
+    language = ""
+    if usecase == "AI Blog Generator":
+        language = user_input.get("language", "") or ""
+
+    # if usecase == "AI Blog Generator":
+    #     topic = user_input.get("topic", "")
+    #     language = user_input.get("language", "")
+    #     generate = user_input.get("generate_blog", False)
+
+    #     if generate:
+    #         if not topic:
+    #             st.error("Please enter a topic.")
+    #         else:
+    #             with st.spinner("Generating your blog..."):
+    #                 try:
+    #                     obj_llm_config = GroqLlm(user_controls_input=user_input)
+    #                     model = obj_llm_config.get_llm_mode()
+    #                     if not model:
+    #                         st.error("Error: LLM Model could not be initialized.")
+    #                         return
+
+    #                     graph_builder = GraphBuilder(model)
+
+    #                     # Choose graph type based on language selection
+    #                     if language:
+    #                         graph = graph_builder.setup_graph(usecase="language",user_input=user_input)
+    #                         state = graph.invoke({"topic": topic, "current_language": language})
+    #                     else:
+    #                         graph = graph_builder.setup_graph(usecase="topic",user_input=user_input)
+    #                         state = graph.invoke({"topic": topic})
+
+    #                     st.success("✅ Blog Generation Completed")
+
+    #                     # === Display structured results ===
+    #                     blog = state.get("blog") if isinstance(state, dict) else getattr(state, "blog", None)
+    #                     if blog:
+    #                         title = blog.get("title") if isinstance(blog, dict) else None
+    #                         content = blog.get("content") if isinstance(blog, dict) else None
+    #                         if title:
+    #                             st.markdown(f"## {title}")
+    #                         if content:
+    #                             st.markdown(content, unsafe_allow_html=True)
+    #                     else:
+    #                         st.info("No structured 'blog' field found. Showing raw state below.")
+    #                         st.json(state)
+
+    #                     st.subheader("📦 Raw State")
+    #                     st.json(state)
+
+    #                 except Exception as e:
+    #                     st.error(f"Error: {e}")
+    #                     st.exception(e)
+    #     return  # Prevent fall-through to other use cas
+
     # === Handle user input depending on usecase ===
     user_message = None
+
+    if usecase == "AI Blog Generator":
+        language = user_input.get("language", "")
     if st.session_state.IsFetchButtonClicked:
         # Special handling for AI News Summarizer (structured input)
         if usecase == "AI News Summarizer":
@@ -133,7 +190,11 @@ def load_langgraph_agenticai_app():
             graph_builder = GraphBuilder(model)
             try:
                 graph = graph_builder.setup_graph(usecase, user_input)
-                DisplayResultStreamlit(usecase, graph, user_message).display_result_on_ui()
+
+                if usecase == "AI Blog Generator" and language:
+                    DisplayResultStreamlit(usecase, graph, user_message,language).display_result_on_ui()
+                else:
+                    DisplayResultStreamlit(usecase, graph, user_message).display_result_on_ui()
             except Exception as e:
                 st.error(f"Error: Graph setup failed - {e}")
                 return
