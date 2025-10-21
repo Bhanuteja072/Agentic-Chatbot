@@ -46,7 +46,7 @@ class WebTool:
 
         # Merge text for chunking
         text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-            chunk_size=700,
+            chunk_size=500,
             chunk_overlap=100,
             separators=["\n\n", "\n", " ", ""]
         )
