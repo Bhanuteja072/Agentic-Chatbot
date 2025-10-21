@@ -40,7 +40,7 @@ class PDFTool:
         full_text = "\n\n".join(d.page_content for d in docs_list)
         merged = Document(page_content=full_text, metadata={"source": self.pdf_path, "total_pages": len(docs_list)})
         text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-            chunk_size=700,     # recommended default
+            chunk_size=500,     # recommended default
             chunk_overlap=100,  # recommended default
             separators=["\n\n", "\n", " ", ""]
         )
