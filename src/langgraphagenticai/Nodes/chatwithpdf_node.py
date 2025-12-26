@@ -12,7 +12,7 @@ from src.langgraphagenticai.tools.PDFtool import PDFTool
 # from langchain_tavily import TavilySearch
 from src.langgraphagenticai.state.State import GraphState
 from src.langgraphagenticai.state.State import RouteQuery
-from src.langgraphagenticai.state.State import GradeDocuments, Hallicination, GradeAnswer
+from src.langgraphagenticai.state.State import GradeDocuments, HallucinationCheck, GradeAnswer
 from src.langgraphagenticai.llms.groqllm import GroqLlm
 
 
@@ -67,7 +67,7 @@ def init_components(user_controls):
         return "\n\n".join(doc.page_content for doc in docs)
     rag_chain = prompt | llm | StrOutputParser()
 
-    structured_llm_grader = llm.with_structured_output(Hallicination)
+    structured_llm_grader = llm.with_structured_output(HallucinationCheck)
 
     # Prompt
     system = """You are a grader assessing whether an LLM generation is grounded in / supported by a set of retrieved facts. \n
