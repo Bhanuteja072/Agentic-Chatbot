@@ -135,9 +135,17 @@ class DisplayResultStreamlit:
             with st.spinner("Analyzing PDF and generating answer... ⏳"):
                 try:
                     result = graph.invoke({"question": user_message})
-                    answer = result.get("generation")
-                    docs = result.get("documents", [])
 
+                    # Prefer "generation" but accept common alternates
+                    def _extract_answer(res):
+                        if isinstance(res, dict):
+                            for k in ("generation", "answer", "output", "response", "result"):
+                                v = res.get(k)
+                                if isinstance(v, str) and v.strip():
+                                    return v
+                        return None
+                    answer = _extract_answer(result)
+                    docs = result.get("documents", []) if isinstance(result, dict) else []
 
                     # Normalize to a list of Document to avoid "'Document' object is not subscriptable"
                     if docs is None:
@@ -163,6 +171,13 @@ class DisplayResultStreamlit:
                             for i, d in enumerate(docs[:5]):  # show first 5 chunks
                                 st.markdown(f"**Chunk {i+1}:**")
                                 st.write(d.page_content)
+                    if not answer and not docs:
+                        st.info("No answer or supporting documents returned. Expand Debug to inspect state.")
+                        with st.expander("Debug state"):
+                            try:
+                                st.json(result if isinstance(result, dict) else {"result": str(result)})
+                            except Exception:
+                                st.write(result)
 
                 except Exception as e:
                     st.error(f"Error processing PDF: {str(e)}")
@@ -241,3 +256,40 @@ class DisplayResultStreamlit:
 
                 except Exception as e:
                     st.error(f"Error processing website(s): {str(e)}")
+
+        elif usecase == "ChatWithYoutube":
+            with st.spinner("Fetching YouTube transcript and generating answer... ⏳"):
+                try:
+                    result = graph.invoke({"question": user_message})
+                    answer = result.get("generation")
+                    docs = result.get("documents", [])
+
+                    # Normalize to a list of Document
+                    if docs is None:
+                        docs = []
+                    elif isinstance(docs, Document):
+                        docs = [docs]
+                    elif isinstance(docs, dict) and "page_content" in docs:
+                        docs = [Document(page_content=docs["page_content"], metadata=docs.get("metadata", {}))]
+                    elif not isinstance(docs, list):
+                        docs = [Document(page_content=str(docs))]
+
+                    # Show user message
+                    with st.chat_message("user"):
+                        st.write(user_message)
+
+                    # Show assistant answer
+                    if answer:
+                        with st.chat_message("assistant"):
+                            st.subheader("▶️ Answer")
+                            st.write(answer)
+
+                    # Show supporting chunks
+                    if docs:
+                        with st.expander("🔎 Supporting YouTube Transcript Chunks"):
+                            for i, d in enumerate(docs[:5]):  # limit to first 5 chunks
+                                st.markdown(f"**Chunk {i+1}:**")
+                                st.write(d.page_content)
+
+                except Exception as e:
+                    st.error(f"Error processing YouTube transcript: {str(e)}")
