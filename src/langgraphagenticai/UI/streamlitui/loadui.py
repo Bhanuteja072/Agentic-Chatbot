@@ -194,6 +194,15 @@ class LoadStreamlitUI:
                 else:
                     self.user_controls["urls"] = None
                     st.info("Enter one or more website URLs to start chatting with it.")
+            
+            elif selected_usecase == "ChatWithYoutube":
+                youtube_url = st.text_input("📺 Enter YouTube Video URL")
+                if youtube_url:
+                    yt_url = [f.strip() for f in youtube_url.split(",") if f.strip()]
+                    self.user_controls["youtube_url"] = yt_url
+                else:
+                    self.user_controls["youtube_url"] = None
+                    st.info("Enter one or more YouTube video URLs to start chatting with it.")
 
     
            
