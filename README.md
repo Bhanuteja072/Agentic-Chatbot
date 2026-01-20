@@ -7,6 +7,7 @@ Highlights
 - Groq LLM integration with model selector
 - Tools: Tavily web search (optional), Wikipedia
 - RAG pipelines for PDF and Website content (FAISS + HuggingFace embeddings)
+- YouTube transcript ingestion with automatic translation fallback to English
 - AI Blog Generator with topic and optional translation flows (Hindi/French)
 - Graph-based orchestration powered by LangGraph
 - Beginner-friendly setup and usage on Windows
@@ -32,6 +33,7 @@ Project structure
     - basic_tool.py — TavilySearch + Wikipedia tools and ToolNode
     - PDFtool.py — PDF loading/splitting, FAISS retriever
     - WebTool.py — URL fetching (requests + BeautifulSoup), splitting, FAISS retriever
+    - youtubeTool.py — transcript fetcher with language/translation fallback + FAISS retriever
   - ui/
     - uiconfigfile.ini — UI options (LLM, models, use cases)
     - streamlitui/
@@ -76,6 +78,11 @@ Use cases
 - Flow B (Language): Title → content → route → optional translation (Hindi/French).
 - Renders on the main page (not sidebar). Supports large outputs; tune token limits via env.
 
+7) ChatWithYoutube (RAG over transcripts)
+- Paste one or more YouTube URLs; the loader normalizes links, fetches transcripts, and auto-translates non-English captions to English.
+- Builds a FAISS retriever over transcript chunks plus metadata (title, author, publish date, etc.).
+- Answers questions grounded in the transcript and shows supporting chunks; falls back gracefully if YouTube blocks transcripts.
+
 --------------------------------------------------------------------------------
 
 Prerequisites
@@ -84,6 +91,10 @@ Prerequisites
 - API keys:
   - GROQ_API_KEY (required for LLM)
   - TAVILY_API_KEY (required for web tools, AI News, and optional web routing in RAG use cases)
+- External binaries for ChatWithPdf:
+  - Poppler (provides pdfinfo/pdftoppm). Install from https://github.com/oschwartz10612/poppler-windows/releases and add <poppler>/Library/bin to PATH.
+  - Tesseract OCR for scanned PDFs. Install from https://github.com/UB-Mannheim/tesseract/wiki and ensure C:\Program Files\Tesseract-OCR is on PATH.
+  - After installation, verify with `pdfinfo -v` and `tesseract -v` in the same shell you use for Streamlit.
 
 --------------------------------------------------------------------------------
 
@@ -133,6 +144,13 @@ Option C — via Streamlit UI
 streamlit run app.py
 ```
 
+Optional validation (same shell)
+```powershell
+pdfinfo -v
+tesseract -v
+```
+If either command fails, update PATH before starting Streamlit; otherwise ChatWithPdf will raise poppler/tesseract errors.
+
 --------------------------------------------------------------------------------
 
 How to use
@@ -165,6 +183,10 @@ How to use
 - Enter a topic in the main page and click Generate.
 - Optional: select a translation target (Hindi or French) to run the language flow.
 - If outputs truncate, raise token limits (see Troubleshooting).
+
+7) ChatWithYoutube
+- Paste one or more YouTube URLs (comma separated). We normalize the links, fetch transcripts with `youtube-transcript-api`, and automatically translate supported transcripts to English.
+- Ask your question; the response cites transcript snippets. If YouTube blocks the transcript for your IP, the UI surfaces a descriptive error.
 
 --------------------------------------------------------------------------------
 
@@ -233,6 +255,7 @@ Performance tips
 - Persist FAISS per PDF/URL set (hash input) to avoid rebuilding on reruns.
 - Prefer PyPDFLoader; fallback to Unstructured for tricky PDFs.
 - Pre-download HuggingFace model locally and set HF_EMBEDDINGS_LOCAL_DIR.
+- Large PDFs (200+ pages) take time. Limit page ranges, cache vectorstores per file hash, or preprocess offline if you expect repeated queries.
 
 --------------------------------------------------------------------------------
 
@@ -255,6 +278,15 @@ Troubleshooting
 
 - Blog content truncates
   - Raise token limit via $env:GROQ_MAX_TOKENS (e.g., 3000–4096) or bind higher max_tokens for the content node.
+
+- ChatWithPdf errors mentioning Poppler/Tesseract (e.g., "Unable to get page count" or "tesseract is not installed")
+  - Install Poppler + Tesseract and add them to PATH, then restart VS Code/terminal so Streamlit inherits the updated environment.
+
+- `Could not retrieve a transcript for the video ... language codes ['en']`
+  - The YouTube video only exposes other languages. We already request Spanish + English and translate to English, but if the language still differs add it to `language` in youtubeTool.py.
+
+- `RequestBlocked` / IP ban errors from youtube-transcript-api
+  - YouTube rate-limited or blocked your IP (common on cloud/VPN). Wait a few hours, switch networks, or provide cookies per the library README to authenticate the request.
 
 --------------------------------------------------------------------------------
 
