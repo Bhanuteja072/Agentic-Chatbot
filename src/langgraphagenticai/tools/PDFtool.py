@@ -1,4 +1,3 @@
-
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -28,7 +27,17 @@ class PDFTool:
     
     def _prepare_pdf(self):
         loader = UnstructuredPDFLoader(self.pdf_path)
-        docs_list = loader.load()
+        try:
+            docs_list = loader.load()
+        except IndexError:
+            raise ValueError(
+                "Unstructured failed to OCR this PDF (image-only, unreadable scan). "
+                "Please upload an OCR-processed or higher-quality PDF."
+            )
+        if not docs_list:
+            raise ValueError(
+                "OCR produced no text. Please upload a higher-quality or OCR-processed PDF."
+            )
         def clean_page_text(txt: str) -> str:
             # tweak to remove repeated page headers/footers, common line patterns, or "Page X of Y"
             import re
