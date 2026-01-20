@@ -10,3 +10,5 @@ wikipedia
 langchain-huggingface
 faiss-cpu
 pypdf
+yt_dlp 
+youtube-transcript-api
