@@ -79,10 +79,10 @@ import os
 import streamlit as st
 import json as _json
 
-from src.langgraphagenticai.ui.streamlitui.loadui import LoadStreamlitUI
+from src.langgraphagenticai.UI.streamlitui.loadui import LoadStreamlitUI
 from src.langgraphagenticai.llms.groqllm import GroqLlm
 from src.langgraphagenticai.graph.graph_builder import GraphBuilder
-from src.langgraphagenticai.ui.streamlitui.display_result import DisplayResultStreamlit
+from src.langgraphagenticai.UI.streamlitui.display_result import DisplayResultStreamlit
 
 # Force UTF-8 for all streams
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
