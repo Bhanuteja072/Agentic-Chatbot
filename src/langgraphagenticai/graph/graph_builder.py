@@ -3,7 +3,7 @@ from langgraph.prebuilt import tools_condition
 from langgraph.graph import START,END
 from typing import Optional
 import os
-from langchain.schema import Document
+from langchain_core.documents import Document
 from src.langgraphagenticai.state.State import State
 from src.langgraphagenticai.state.State import GraphState
 from src.langgraphagenticai.state.blog_state import BlogState
@@ -16,9 +16,10 @@ from src.langgraphagenticai.Nodes.ai_news_node import AINewsNode
 from src.langgraphagenticai.Nodes.chatwithpdf_node import retrieve , generate , grade_docs , transform_query , route_question, decide_to_generate , grade_generation_v_documents_and_question
 # from src.langgraphagenticai.tools.PDFtool import PDFTool
 from src.langgraphagenticai.tools.PDFtool import build_pdf_retriever
+from src.langgraphagenticai.tools.youtubeTool import build_yt_retriever
 
 from src.langgraphagenticai.tools.WebTool import WebTool
-from langchain_tavily  import TavilySearch
+from langchain_tavily  import TavilySearch  
 from src.langgraphagenticai.Nodes.chatwithpdf_node import init_components
 
 class GraphBuilder:
@@ -85,7 +86,7 @@ class GraphBuilder:
         self.graph_builder.add_edge("save_result",END)
 
 
-    def chat_with_pdf_graph(self , pdf_path: Optional[str] = None , urls: list[str] = None,tavily_key : Optional[str] = None ,user_input: dict = None):
+    def chat_with_pdf_graph(self , pdf_path: Optional[str] = None , urls: list[str] = None, yt_url : Optional[list[str]] = None,tavily_key : Optional[str] = None ,user_input: dict = None):
         """
         Build the nodes for chat-with-pdf. This function DOES NOT run websearch or retriever
         at graph build time; it registers functions (wrappers) that will run when the graph executes.
@@ -93,7 +94,9 @@ class GraphBuilder:
         if urls:
             web_tool = WebTool(urls)
             retriever = web_tool.get_retriever()
-        else:   
+        elif yt_url:
+            retriever = build_yt_retriever(tuple(sorted(yt_url)))
+        else:
             retriever = build_pdf_retriever(pdf_path)
             # pdf_tool = PDFTool(pdf_path)
             # retriever = pdf_tool.get_retriever()
@@ -266,6 +269,16 @@ class GraphBuilder:
                 raise ValueError("No URLs provided. Please enter at least one URL.")
             self.graph_builder = StateGraph(GraphState)
             self.chat_with_pdf_graph(urls=urls, user_input=user_input)
+            return self.graph_builder.compile()
+        
+        elif usecase == "ChatWithYoutube":
+            urls = None
+            if user_input:
+                urls = user_input.get("youtube_url")
+            if not urls:
+                raise ValueError("No YouTube URLs provided. Please enter at least one YouTube video URL.")
+            self.graph_builder = StateGraph(GraphState)
+            self.chat_with_pdf_graph(yt_url=urls, user_input=user_input)
             return self.graph_builder.compile()
         
         elif usecase == "AI Blog Generator":

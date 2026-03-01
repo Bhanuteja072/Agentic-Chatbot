@@ -4,7 +4,7 @@ import json
 import uuid
 from typing import Optional 
 import unicodedata
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 from src.langgraphagenticai import graph  # add this import
 

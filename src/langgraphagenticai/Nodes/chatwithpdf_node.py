@@ -1,6 +1,6 @@
 from typing import List
 from typing_extensions import TypedDict
-from langchain.schema import Document
+from langchain_core.documents import Document
 from langchain import hub
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate

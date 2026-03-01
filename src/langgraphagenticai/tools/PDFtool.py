@@ -2,7 +2,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 # from langchain.document_loaders import PyPDFLoader
-from langchain.schema import Document
+from langchain_core.documents import Document
 # from langchain.document_loaders import UnstructuredPDFLoader
 from langchain_community.document_loaders import UnstructuredPDFLoader
 import streamlit as st
