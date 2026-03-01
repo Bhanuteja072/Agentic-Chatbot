@@ -2,6 +2,7 @@ langchain
 langgraph
 langchain_community
 langchain_core
+langchain-text-splitters
 langchain_groq
 faiss-cpu
 langchain_tavily
@@ -11,6 +12,7 @@ wikipedia
 langchain-huggingface
 sentence-transformers
 unstructured
+unstructured-inference
 pi-heif
 pdfminer.six
 faiss-cpu
