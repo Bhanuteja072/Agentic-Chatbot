@@ -1,7 +1,6 @@
 from typing import List
 from typing_extensions import TypedDict
 from langchain_core.documents import Document
-from langchain import hub
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
@@ -60,7 +59,21 @@ def init_components(user_controls):
 
     retrieval_grader = grade_prompt | structured_llm_grader
 
-    prompt = hub.pull("rlm/rag-prompt")
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "You are an assistant for question-answering tasks. "
+                "Use the following pieces of retrieved context to answer the question. "
+                "If you don't know the answer, just say you don't know. "
+                "If the context has more information than asked, ignore it and answer only what is asked.",
+            ),
+            (
+                "human",
+                "Context:\n{context}\n\nQuestion: {question}\n\nAnswer:",
+            ),
+        ]
+    )
 
     # Post-processing
     def format_docs(docs):
