@@ -8,9 +8,14 @@ faiss-cpu
 langchain_tavily
 tavily
 streamlit
+requests
+beautifulsoup4
 wikipedia
 langchain-huggingface
 sentence-transformers
+pdf2image
+pytesseract
+Pillow
 unstructured
 unstructured-inference
 pi-heif
