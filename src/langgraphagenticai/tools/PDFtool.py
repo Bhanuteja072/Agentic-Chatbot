@@ -1,3 +1,4 @@
+import os
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -26,6 +27,7 @@ class PDFTool:
     #     self.retriever = self.vectorstore.as_retriever()
     
     def _prepare_pdf(self):
+        os.environ.setdefault("OCR_AGENT", "tesseract")
         loader = UnstructuredPDFLoader(self.pdf_path)
         try:
             docs_list = loader.load()
