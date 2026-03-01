@@ -18,6 +18,8 @@ pytesseract
 Pillow
 unstructured
 unstructured-inference
+spacy
+en-core-web-sm
 pi-heif
 pdfminer.six
 faiss-cpu
