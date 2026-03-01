@@ -10,6 +10,7 @@ streamlit
 wikipedia
 langchain-huggingface
 sentence-transformers
+unstructured
 faiss-cpu
 pypdf
 yt_dlp 
