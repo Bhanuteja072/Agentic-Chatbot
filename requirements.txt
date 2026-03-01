@@ -11,6 +11,7 @@ wikipedia
 langchain-huggingface
 sentence-transformers
 unstructured
+pdfminer.six
 faiss-cpu
 pypdf
 yt_dlp 
