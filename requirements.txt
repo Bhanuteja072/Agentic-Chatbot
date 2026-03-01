@@ -9,6 +9,7 @@ tavily
 streamlit
 wikipedia
 langchain-huggingface
+sentence-transformers
 faiss-cpu
 pypdf
 yt_dlp 
