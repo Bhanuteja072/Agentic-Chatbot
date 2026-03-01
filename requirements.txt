@@ -11,6 +11,7 @@ wikipedia
 langchain-huggingface
 sentence-transformers
 unstructured
+pi-heif
 pdfminer.six
 faiss-cpu
 pypdf
