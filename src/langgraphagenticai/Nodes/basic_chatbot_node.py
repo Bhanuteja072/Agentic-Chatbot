@@ -25,17 +25,18 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from operator import itemgetter
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.messages import trim_messages
+import streamlit as st
+from langchain_community.chat_message_histories import ChatMessageHistory
 
 # -------------------------
 # In-memory store for sessions
 # -------------------------
-store = {}
-
-def get_session_history(session_id: str) -> BaseChatMessageHistory:
-    if session_id not in store:
-        store[session_id] = ChatMessageHistory()
-    return store[session_id]
-
+def get_session_history(session_id: str):
+    if "chat_store" not in st.session_state:
+        st.session_state["chat_store"] = {}
+    if session_id not in st.session_state["chat_store"]:
+        st.session_state["chat_store"][session_id] = ChatMessageHistory()
+    return st.session_state["chat_store"][session_id]
 
 class BasicChatbotNode:
     """
