@@ -28,3 +28,4 @@ pypdf
 yt_dlp 
 youtube-transcript-api
 unstructured-pytesseract
+fpdf2
