@@ -177,6 +177,24 @@ def load_langgraph_agenticai_app():
         # Default chat input for other use cases
         if usecase != "AI News Summarizer":
             user_message = st.chat_input("Enter your message:")
+    # ✅ FIX — Always render ChatWithPdf history even when no new message
+    if not user_message and usecase == "ChatWithPdf":
+        if "pdf_chat_history" in st.session_state and st.session_state.pdf_chat_history:
+            from langchain_core.documents import Document
+            from src.langgraphagenticai.UI.streamlitui.display_result import generate_conversation_pdf
+
+            for msg in st.session_state.pdf_chat_history:
+                with st.chat_message(msg["role"]):
+                    st.write(msg["content"])
+
+            pdf_bytes = generate_conversation_pdf(st.session_state.pdf_chat_history)
+            st.download_button(
+                label="📥 Download Conversation as PDF",
+                data=pdf_bytes,
+                file_name="conversation.pdf",
+                mime="application/pdf",
+                key="persistent_download_btn"
+            )
 
     # === Proceed only if message is entered ===
     if user_message:
