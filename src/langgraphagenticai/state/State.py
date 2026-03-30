@@ -1,6 +1,7 @@
+from langchain_core.messages import BaseMessage
 from typing_extensions import TypedDict,List
 from langgraph.graph.message import add_messages
-from typing import Annotated
+from typing import Annotated, Optional
 from pydantic import BaseModel, Field
 from typing import Literal
 
@@ -70,3 +71,4 @@ class GraphState(TypedDict):
   question:str
   generation:str
   documents:List[str]
+  chat_history: Optional[List[BaseMessage]]  # ADD THIS LINE
