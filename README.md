@@ -1,6 +1,18 @@
 # LangGraph Agentic AI — Stateful Agentic Graphs with Streamlit
 
+
 Build and run stateful, production-style AI workflows using LangGraph + LangChain with a Streamlit UI. This project ships multiple use cases (basic chat, tool-augmented chat, AI news summarization, Chat-With-PDF RAG, Chat-With-Website RAG, and AI Blog Generator) wired as graphs with clear nodes, edges, and state.
+
+--------------------------------------------------------------------------------
+
+## Recent Features
+
+- **Persistent Chat History for ChatWithPdf:**
+  - The ChatWithPdf use case now maintains a persistent chat history. All previous questions and answers remain visible in the UI, allowing for a continuous, conversational experience.
+  - When a new PDF is uploaded (i.e., the PDF path changes), the chat history is automatically cleared to avoid mixing conversations from different documents.
+  - The LLM is provided with the full chat history as context for each new query, improving multi-turn conversation quality.
+
+--------------------------------------------------------------------------------
 
 Highlights
 - Streamlit UI with selectable LLM provider and use cases
