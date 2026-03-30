@@ -180,7 +180,12 @@ class LoadStreamlitUI:
                     pdf_path = os.path.join(pdf_dir, uploaded_file.name)
                     with open(pdf_path, "wb") as f:
                         f.write(uploaded_file.getbuffer())
-                    self.user_controls["pdf_path"] = pdf_path
+                        # Clear chat history if PDF path has changed
+                        prev_pdf_path = getattr(st.session_state, "_prev_pdf_path", None)
+                        if prev_pdf_path != pdf_path:
+                            st.session_state.pdf_chat_history = []
+                        st.session_state._prev_pdf_path = pdf_path
+                        self.user_controls["pdf_path"] = pdf_path
                 else:
                     self.user_controls["pdf_path"] = None
                     st.info("Upload a PDF to start chatting with it.")
