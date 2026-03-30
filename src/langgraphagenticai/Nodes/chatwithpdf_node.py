@@ -269,20 +269,29 @@ def retrieve(state : GraphState,retriever):
 #generate
 
 def generate(state : GraphState ,rag_chain):
-  """
-    Generate answer
+    """
+        Generate answer
 
-    Args:
-        state (dict): The current graph state
+        Args:
+            state (dict): The current graph state
 
-    Returns:
-        state (dict): New key added to state, generation, that contains LLM generation
-  """
-  print("---GENERATE---")
-  question=state["question"]
-  docs=state["documents"]
-  generation=rag_chain.invoke({"context":docs,"question":question})
-  return {"documents": docs, "question": question, "generation": generation}
+        Returns:
+            state (dict): New key added to state, generation, that contains LLM generation
+    """
+    print("---GENERATE---")
+    question=state["question"]
+    docs=state["documents"]
+    chat_history = state.get("chat_history", [])
+    history_str = ""
+    if chat_history:
+        for msg in chat_history:
+            role = "User" if msg["role"] == "user" else "Assistant"
+            history_str += f"{role}: {msg['content']}\n"
+    full_question = question
+    if history_str:
+        full_question = f"Previous Conversation:\n{history_str}\nCurrent Question: {question}"
+    generation=rag_chain.invoke({"context":docs,"question":full_question})
+    return {"documents": docs, "question": question, "generation": generation}
 
 
 
