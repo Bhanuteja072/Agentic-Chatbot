@@ -86,6 +86,10 @@
 import streamlit as st
 import os
 from src.langgraphagenticai.UI.uiconfigfile import Config
+from dotenv import load_dotenv
+load_dotenv()  # Load environment variables from .env file
+
+groq_api_key = os.getenv("GROQ_API_KEY")
 
 class LoadStreamlitUI:
     def __init__(self):
@@ -123,15 +127,14 @@ class LoadStreamlitUI:
 
 
             # LLM selection
-            self.user_controls["selected_llm"] = st.selectbox("Select LLM", llm_options)
+            self.user_controls["selected_llm"] = st.selectbox("Select LLM", llm_options, index=0)
 
             if self.user_controls["selected_llm"] == "Groq":
                 model_options = self.config.get_groq_model_options()
-                self.user_controls["selected_groq_model"] = st.selectbox("Select Model", model_options)
-                self.user_controls["GROQ_API_KEY"] = st.session_state["GROQ_API_KEY"] = st.text_input("API Key", type="password")
+                self.user_controls["selected_groq_model"] = st.selectbox("Select Model", model_options, index=5)
+                self.user_controls["GROQ_API_KEY"] = st.session_state["GROQ_API_KEY"] = st.text_input("API Key", type="password", value=groq_api_key if groq_api_key else "")
 
-                if not self.user_controls["GROQ_API_KEY"]:
-                    st.warning("⚠️ Please enter your GROQ API key to proceed. Don't have? refer : https://console.groq.com/keys ")
+                st.info("💡 You can also use your own GROQ API key. Get it [here](https://console.groq.com/keys)")
 
             # Usecase selection
             self.user_controls["selected_usecase"] = st.selectbox("Select Usecases", usecase_options)
@@ -195,6 +198,11 @@ class LoadStreamlitUI:
                 if url_input:
                     # Support multiple URLs (comma-separated)
                     urls = [u.strip() for u in url_input.split(",") if u.strip()]
+                    # Clear chat history if URLs have changed
+                    prev_urls = getattr(st.session_state, "_prev_website_urls", None)
+                    if prev_urls != urls:
+                        st.session_state.website_chat_history = []
+                    st.session_state._prev_website_urls = urls
                     self.user_controls["urls"] = urls
                 else:
                     self.user_controls["urls"] = None
