@@ -8,6 +8,43 @@ from langchain_core.documents import Document
 from fpdf import FPDF
 import io
 from src.langgraphagenticai import graph  # add this import
+import streamlit.components.v1 as components
+
+def render_copy_icon(text: str, key_id: str) -> None:
+    """Render a tiny copy icon button that copies to clipboard without page refresh."""
+    safe_key = "".join(c if c.isalnum() or c in "_-" else "_" for c in key_id)
+    # Properly escape the text for safe JSON embedding
+    safe_text = json.dumps(text if isinstance(text, str) else str(text))
+    components.html(
+        f"""
+        <button id="copy_{safe_key}" style="
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 18px;
+            padding: 0;
+            margin-left: 8px;
+            transition: all 0.2s;
+        " title="Click to copy">📋</button>
+        <script>
+        const btn = document.getElementById('copy_{safe_key}');
+        const textToCopy = {safe_text};
+        if (btn) {{
+            btn.onclick = async () => {{
+                try {{
+                    await navigator.clipboard.writeText(textToCopy);
+                    btn.textContent = '✅';
+                    setTimeout(() => {{ btn.textContent = '📋'; }}, 1000);
+                }} catch (e) {{
+                    btn.textContent = '⚠️';
+                    setTimeout(() => {{ btn.textContent = '📋'; }}, 1000);
+                }}
+            }};
+        }}
+        </script>
+        """,
+        height=28,
+    )
 
 def normalize_text(text: str) -> str:
     """Convert text to safe ASCII/UTF-8 by removing unsupported characters."""
@@ -99,9 +136,14 @@ class DisplayResultStreamlit:
                     st.session_state.chat_history.append(("assistant", assistant_message))
 
             # Render full chat history
-            for role, msg in st.session_state.chat_history:
+            for idx, (role, msg) in enumerate(st.session_state.chat_history):
                 with st.chat_message(role):
-                    st.write(msg)
+                    col1, col2 = st.columns([0.95, 0.05])
+                    with col1:
+                        st.write(msg)
+                    if role == "assistant":
+                        with col2:
+                            render_copy_icon(msg, f"basic_{idx}")
 
 
 
@@ -227,9 +269,14 @@ class DisplayResultStreamlit:
                         if answer:
                             st.session_state.pdf_chat_history.append({"role": "assistant", "content": answer})
                         # ✅ Step 2 — Render the FULL history once (includes current Q&A)
-                        for msg in st.session_state.pdf_chat_history:
+                        for idx, msg in enumerate(st.session_state.pdf_chat_history):
                             with st.chat_message(msg["role"]):
-                                st.write(msg["content"])
+                                col1, col2 = st.columns([0.95, 0.05])
+                                with col1:
+                                    st.write(msg["content"])
+                                if msg["role"] == "assistant":
+                                    with col2:
+                                        render_copy_icon(msg["content"], f"pdf_{idx}")
                         # ✅ Download button always visible after conversation starts
                         if st.session_state.pdf_chat_history:
                             pdf_bytes = generate_conversation_pdf(st.session_state.pdf_chat_history)
@@ -348,9 +395,14 @@ class DisplayResultStreamlit:
                         if answer:
                             st.session_state.website_chat_history.append({"role": "assistant", "content": answer})
 
-                        for msg in st.session_state.website_chat_history:
+                        for idx, msg in enumerate(st.session_state.website_chat_history):
                             with st.chat_message(msg["role"]):
-                                st.write(msg["content"])
+                                col1, col2 = st.columns([0.95, 0.05])
+                                with col1:
+                                    st.write(msg["content"])
+                                if msg["role"] == "assistant":
+                                    with col2:
+                                        render_copy_icon(msg["content"], f"web_{idx}")
                         # ✅ Download button always visible after conversation starts
                         if st.session_state.website_chat_history:
                             pdf_bytes = generate_conversation_pdf(st.session_state.website_chat_history)
@@ -406,6 +458,7 @@ class DisplayResultStreamlit:
                         with st.chat_message("assistant"):
                             st.subheader("▶️ Answer")
                             st.write(answer)
+                            st.button("📋 Copy Answer", on_click=st.session_state.setdefault, args=("clipboard", answer), key=f"copy_yt_{hash(answer)}")
 
                     # Show supporting chunks
                     if docs:
