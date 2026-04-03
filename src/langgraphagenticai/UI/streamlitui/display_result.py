@@ -286,50 +286,99 @@ class DisplayResultStreamlit:
                     st.exception(e)
 
         elif usecase == "ChatWithWebsite":
-            with st.spinner("Fetching website(s) and generating answer... ⏳"):
-                try:
-                    result = graph.invoke({"question": user_message})
-                    answer = result.get("generation")
-                    docs = result.get("documents", [])
+            # Initialize website chat history in session state
+            if "website_chat_history" not in st.session_state:
+                st.session_state.website_chat_history = []
+            
+            # ✅ Check if user is asking for conversation download via text
+            download_keywords = [
+                "full conversation", "give me the conversation",
+                "download conversation", "export conversation",
+                "conversation history", "give me all questions",
+                "give me above conversation"
+            ]
+            user_wants_download = any(
+                    kw in user_message.lower() for kw in download_keywords
+            )
+            if user_wants_download and st.session_state.website_chat_history:
+                # Just give them the PDF directly without invoking graph
+                with st.chat_message("assistant"):
+                    st.write("Here is your full conversation as a PDF. Click below to download")
+                pdf_bytes = generate_conversation_pdf(st.session_state.website_chat_history)
+                st.download_button(
+                    label=" 📥 Download Conversation PDF",
+                    data=pdf_bytes,
+                    file_name="chat_with_website_conversation.pdf",
+                    mime="application/pdf"
+                )
+                for msg in st.session_state.website_chat_history:
+                    with st.chat_message(msg["role"]):
+                        st.write(msg["content"])
 
-                    # Normalize to a list of Document
-                    if docs is None:
-                        docs = []
-                    elif isinstance(docs, Document):
-                        docs = [docs]
-                    elif isinstance(docs, dict) and "page_content" in docs:
-                        docs = [Document(page_content=docs["page_content"], metadata=docs.get("metadata", {}))]
-                    elif not isinstance(docs, list):
-                        docs = [Document(page_content=str(docs))]
+            elif user_wants_download and not st.session_state.website_chat_history:
+                with st.chat_message("assistant"):
+                    st.write("There is no conversation history yet. Please ask some questions first.")
 
-                    # Show user message
-                    with st.chat_message("user"):
-                        st.write(user_message)
+            else:
+            
+                with st.spinner("Fetching website(s) and generating answer... ⏳"):
+                    try:
+                        # Pass chat_history from session state into graph.invoke()
+                        result = graph.invoke({"question": user_message, "chat_history": st.session_state.website_chat_history})
+                        def _extract_answer(res):
+                            if isinstance(res, dict):
+                                for k in ("generation", "answer", "output", "response", "result"):
+                                    v = res.get(k)
+                                    if isinstance(v, str) and v.strip():
+                                        return v
+                            return None
+                        answer = _extract_answer(result)
+                        docs = result.get("documents", []) if isinstance(result, dict) else []
 
-                    # Show assistant answer
-                    if answer:
-                        with st.chat_message("assistant"):
-                            st.subheader("🌐 Answer")
-                            st.write(answer)
+                        # Normalize to a list of Document
+                        if docs is None:
+                            docs = []
+                        elif isinstance(docs, Document):
+                            docs = [docs]
+                        elif isinstance(docs, dict) and "page_content" in docs:
+                            docs = [Document(page_content=docs["page_content"], metadata=docs.get("metadata", {}))]
+                        elif not isinstance(docs, list):
+                            docs = [Document(page_content=str(docs))]
+                        st.session_state.website_chat_history.append({"role": "user", "content": user_message})
+                        if answer:
+                            st.session_state.website_chat_history.append({"role": "assistant", "content": answer})
 
-                    # Show supporting chunks grouped by URL
-                    if docs:
-                        # Group chunks by source URL
-                        from collections import defaultdict
-                        grouped_docs = defaultdict(list)
-                        for d in docs:
-                            src = d.metadata.get("source", "Unknown source")
-                            grouped_docs[src].append(d)
+                        for msg in st.session_state.website_chat_history:
+                            with st.chat_message(msg["role"]):
+                                st.write(msg["content"])
+                        # ✅ Download button always visible after conversation starts
+                        if st.session_state.website_chat_history:
+                            pdf_bytes = generate_conversation_pdf(st.session_state.website_chat_history)
+                            st.download_button(
+                                label="📥 Download Conversation as PDF",
+                                data=pdf_bytes,
+                                file_name="website_conversation.pdf",
+                                mime="application/pdf"
+                            )
 
-                        st.subheader("🔎 Supporting Website Chunks")
-                        for source, source_docs in grouped_docs.items():
-                            with st.expander(f"Source: {source}"):
-                                for i, d in enumerate(source_docs[:5]):  # limit 5 per site
-                                    st.markdown(f"**Chunk {i+1}:**")
-                                    st.write(d.page_content)
+                        # Show supporting chunks grouped by URL
+                        if docs:
+                            # Group chunks by source Ud)
+                            with st.expander("🔎 Supporting Website Chunks"):
+                                    for i, d in enumerate(docs[:5]):  # show first 5 chunks
+                                        st.markdown(f"**Chunk {i+1}:**")
+                                        st.write(d.page_content)
 
-                except Exception as e:
-                    st.error(f"Error processing website(s): {str(e)}")
+                        if not answer and not docs:
+                            st.info("No answer or supporting documents returned. Expand Debug to inspect state.")
+                            with st.expander("Debug state"):
+                                try:
+                                    st.json(result if isinstance(result, dict) else {"result": str(result)})
+                                except Exception:
+                                    st.write(result)
+
+                    except Exception as e:
+                        st.error(f"Error processing website(s): {str(e)}")
 
         elif usecase == "ChatWithYoutube":
             with st.spinner("Fetching YouTube transcript and generating answer... ⏳"):
