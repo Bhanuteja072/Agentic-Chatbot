@@ -344,10 +344,11 @@ def transform_query(state : GraphState ,question_rewriter):
   """
   question=state["question"]
   documents = state["documents"]
+  retry_count = state.get("retry_count", 0)
 
   print("---TRANSFORM QUERY---")
   new_question=question_rewriter.invoke({"question":question})
-  return {"documents": documents, "question": new_question}
+  return {"documents": documents, "question": new_question, "retry_count": retry_count + 1}
 
 
 
@@ -409,8 +410,12 @@ def decide_to_generate(state : GraphState):
     print("---ASSESS GRADED DOCUMENTS---")
     state["question"]
     filtered_documents = state["documents"]
+    retry_count = state.get("retry_count", 0)
 
     if not filtered_documents:
+        if retry_count >= 2:
+            print("---DECISION: MAX RETRIES REACHED, GIVING UP---")
+            return "unrelated"          # new exit route
         # All documents have been filtered check_relevance
         # We will re-generate a new query
         print(
