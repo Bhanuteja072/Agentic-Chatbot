@@ -72,3 +72,4 @@ class GraphState(TypedDict):
   generation:str
   documents:List[str]
   chat_history: Optional[List[BaseMessage]]  # ADD THIS LINE
+  retry_count: Optional[int] # ADD THIS LINE
