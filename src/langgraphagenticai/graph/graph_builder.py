@@ -133,7 +133,8 @@ class GraphBuilder:
 
   
 
-
+        def unrelated_response(state):
+            return {"generation": "I'm sorry, I couldn't find anything related to your question in the provided document. Please ask something relevant to the content."}
 
 
         # chat_with_pdf_node=ChatWithPdfNode()
@@ -143,6 +144,7 @@ class GraphBuilder:
         self.graph_builder.add_node("transform_query",lambda s: transform_query(s, question_rewriter))
         self.graph_builder.add_node("grade_docs",lambda s: grade_docs(s, retrieval_grader))
         self.graph_builder.add_node("generate",lambda s: generate(s, rag_chain))
+        self.graph_builder.add_node("unrelated_response", unrelated_response)
 
         # self.graph_builder.add_conditional_edges(
         #     START,
@@ -161,6 +163,7 @@ class GraphBuilder:
                 {
                     "transform_query": "transform_query",
                     "generate": "generate",
+                    "unrelated": "unrelated_response"
                 },
         )
 
@@ -174,6 +177,7 @@ class GraphBuilder:
                     "not useful": "transform_query",
                 },
         )
+        self.graph_builder.add_edge("unrelated_response", END)
 
     def build_topic_graph(self):
             """
